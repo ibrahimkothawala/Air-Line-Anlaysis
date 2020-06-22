@@ -102,7 +102,7 @@ for ii in range(npts):
     #calculation of P* for choking condition (relevance unknown)
     Pstar = (2/(gamma + 1))**(gamma/(gamma - 1))*P0
     PdropOrifice = (P_static - P4_real)*1e-6
-    if PdropOrifice > 0.0:
+    if PdropOrifice < 0.0:
         soln[:,ii] = np.zeros((len(soln[:,ii])))
     else:
         PdropSystem = (PdropLines + PdropOrifice)
