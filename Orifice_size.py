@@ -15,12 +15,13 @@ import matplotlib.pyplot as plt
 #Orifice Plate try 300
 #&&Cantera
 #Inputs
+dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availabality or other suppliers
 mdot = 0.3 #mass flow rate [kg/s]
 T0 = 300# #ambient temperature [K]/stagnation
 npts = 5
 Tstag = T0
 gas = ct.Solution('air.cti') 
-pressureRange = np.linspace(1300,1500,npts)
+pressureRange = np.linspace(1000,1500,npts)
 soln = np.zeros((7,npts))
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
 for ii in range(npts):
@@ -42,7 +43,7 @@ for ii in range(npts):
     try:
         LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, plots=False)
     except:
-        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+" and this pressure "+str(pressureRange[ii]))
+        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii]+"psi"))
         continue     
         
     
@@ -82,7 +83,7 @@ for ii in range(npts):
     P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6)
 
     #observe any corrections due to standard orifice sizing
-    dPurchase = 0.18*0.0254 #purchase orifice size from mcmaster
+    dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
     dPurchase = d_orificeMin
     Apurchase = np.pi*(dPurchase/2)**2 #m^2 
     #theoretical maximum from purchased orifice
@@ -123,21 +124,23 @@ for ii in range(npts):
 #write helper function to delete zeros of soln vector
 #%%
 xlabel = 'Upstream Pressure (MPa)'
+soln2 = np.ma.masked_equal(soln,0)
+
 fig, axs = plt.subplots(2, 1, constrained_layout=True)
-axs[0].plot(pDropCalc.psi_to_MPa(pressureRange), soln[0,:]/1e6,'-',label = 'Pressure after Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(pressureRange), soln[1,:],'-', label = 'Delta P Across Lines')
-axs[0].plot(pDropCalc.psi_to_MPa(pressureRange), soln[2,:],'-', label = 'Delta P Across Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(pressureRange), soln[3,:],'-', label = 'Total Delta P')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[0,:]/1e6,'-',label = 'Pressure after Orifice')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[1,:],'-', label = 'Delta P Across Lines')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[2,:],'-', label = 'Delta P Across Orifice')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[3,:],'-', label = 'Total Delta P')
 axs[0].legend()
 axs[0].set_title('Changes in System Pressures with Upstream Pressure')
 axs[0].set_xlabel(xlabel)
 axs[0].set_ylabel('Pressure (MPa)')
 #fig.suptitle(' Flow Results', fontsize=12)
 axs[1].set_ylabel('Orifice Diameter [in]')
-lns1 = axs[1].plot(pDropCalc.psi_to_MPa(pressureRange),soln[4,:], '-',label = 'Orifice Diameter [in]', color = 'tab:orange')
+lns1 = axs[1].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[4,:], '-',label = 'Orifice Diameter [in]', color = 'tab:orange')
 ax2 = axs[1].twinx()
 ax2.set_ylabel('Mass Flowrate [kg/s]')
-lns2 = ax2.plot(pDropCalc.psi_to_MPa(pressureRange),soln[5,:], '-',label = 'Mdot Experimental [kg/s]', color = 'tab:blue')
+lns2 = ax2.plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[5,:], '-',label = 'Mdot Experimental [kg/s]', color = 'tab:blue')
 axs[1].set_xlabel(xlabel)
 axs[1].set_title('Orifice Properties Against Upstream Pressure')
 axs[1].legend(loc='upper right')
