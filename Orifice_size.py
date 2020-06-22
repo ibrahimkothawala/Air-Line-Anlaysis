@@ -101,23 +101,25 @@ for ii in range(npts):
 
     #calculation of P* for choking condition (relevance unknown)
     Pstar = (2/(gamma + 1))**(gamma/(gamma - 1))*P0
-
     PdropOrifice = (P_static - P4_real)*1e-6
-    PdropSystem = (PdropLines + PdropOrifice)
-    print('\nOrifice Results:')
-    print('Upstream Pressure:', InitialPressure*1e-6,'(MPa)')
-    print('Solved orifice diameter (purchase one close to this)',d_inchesMin,'(in)')
-    print('critical orifice diameter',dcrit,'(in)')
-    print('Pressure entering chamber',P4_real*1e-6,'(MPa)')
-    print('Pressure entering chamber',P4_real*1e-6*145.038,'(PSI)')
-    print('Pressure drop across lines', PdropLines,'(MPa)')
-    print('Pressure drop across orifice ',PdropOrifice,'(MPa)')
-    print('Total Pressure drop across system', PdropSystem,'(MPa)')
-    print('mdot from experimentation from purchased orifice', mdotExperimental, '(kg/s)')
-    print('mdot theoretical max from calculated downstream pressure', mdotPurchase, '(kg/s)')
-    print('mdot theoretical from stagnation properties', mdotmaxO, '(kg/s)\n')
-    
-    soln[:,ii] =[P4_real,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
+    if PdropOrifice > 0.0:
+        soln[:,ii] = np.zeros((len(soln[:,ii])))
+    else:
+        PdropSystem = (PdropLines + PdropOrifice)
+        print('\nOrifice Results:')
+        print('Upstream Pressure:', InitialPressure*1e-6,'(MPa)')
+        print('Solved orifice diameter (purchase one close to this)',d_inchesMin,'(in)')
+        print('critical orifice diameter',dcrit,'(in)')
+        print('Pressure entering chamber',P4_real*1e-6,'(MPa)')
+        print('Pressure entering chamber',P4_real*1e-6*145.038,'(PSI)')
+        print('Pressure drop across lines', PdropLines,'(MPa)')
+        print('Pressure drop across orifice ',PdropOrifice,'(MPa)')
+        print('Total Pressure drop across system', PdropSystem,'(MPa)')
+        print('mdot from experimentation from purchased orifice', mdotExperimental, '(kg/s)')
+        print('mdot theoretical max from calculated downstream pressure', mdotPurchase, '(kg/s)')
+        print('mdot theoretical from stagnation properties', mdotmaxO, '(kg/s)\n')
+        
+        soln[:,ii] =[P4_real,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
 #write helper function to delete zeros of soln vector
 #%%
 xlabel = 'Upstream Pressure (MPa)'
