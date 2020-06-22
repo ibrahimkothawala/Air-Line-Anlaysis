@@ -43,7 +43,7 @@ for ii in range(npts):
     try:
         LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, plots=False)
     except:
-        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii]+"psi"))
+        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+"psi")
         continue     
         
     
