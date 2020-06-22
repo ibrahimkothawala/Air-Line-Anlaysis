@@ -131,12 +131,15 @@ axs[0].set_xlabel(xlabel)
 axs[0].set_ylabel('Pressure (MPa)')
 #fig.suptitle(' Flow Results', fontsize=12)
 axs[1].set_ylabel('Orifice Diameter [in]')
-axs[1].plot(pDropCalc.psi_to_MPa(pressureRange),soln[4,:], '-',label = 'Orifice Diameter in Inches')
+lns1 = axs[1].plot(pDropCalc.psi_to_MPa(pressureRange),soln[4,:], '-',label = 'Orifice Diameter [in]', color = 'tab:orange')
 ax2 = axs[1].twinx()
 ax2.set_ylabel('Mass Flowrate [kg/s]')
-ax2.plot(pDropCalc.psi_to_MPa(pressureRange),soln[5,:], '-',label = 'Mdot Experimental')
+lns2 = ax2.plot(pDropCalc.psi_to_MPa(pressureRange),soln[5,:], '-',label = 'Mdot Experimental [kg/s]', color = 'tab:blue')
 axs[1].set_xlabel(xlabel)
 axs[1].set_title('Orifice Properties Against Upstream Pressure')
+axs[1].legend(loc='upper right')
+ax2.legend(loc='right')
+
 plt.show()
 #Explanation of Results
 
