@@ -27,8 +27,8 @@ def psi_to_MPa(psi):
     return  0.00689*psi
 
 
-def LineAnalysis(mdot, T0,P1,gas,gamma, step,intermediateOutputs=False,plots=True):
-    
+def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=False,plots=True):
+    Kvec,Lvec,Dvec,epsvec = pipeSysProp
     pipeSegments = len(Kvec)
     soln = np.zeros((5,pipeSegments))
     pDropvec = np.zeros(pipeSegments)

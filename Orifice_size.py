@@ -6,6 +6,7 @@ Created on Mon Feb 10 19:20:32 2020
 """
 #testing github stuff
 #testing again for fun
+#https://guides.github.com/introduction/flow/
 
 import numpy as np
 import LineLossAnalysis as pDropCalc
@@ -15,13 +16,17 @@ import matplotlib.pyplot as plt
 #Orifice Plate try 300
 #&&Cantera
 #Inputs
+Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078]
+Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635]
+Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398]
+epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm #https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
 dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availabality or other suppliers
 mdot = 0.3 #mass flow rate [kg/s]
 T0 = 300# #ambient temperature [K]/stagnation
 npts = 5
 Tstag = T0
 gas = ct.Solution('air.cti') 
-pressureRange = np.linspace(1000,1500,npts)
+pressureRange = np.linspace(1200,1515,npts)
 soln = np.zeros((7,npts))
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
 for ii in range(npts):
