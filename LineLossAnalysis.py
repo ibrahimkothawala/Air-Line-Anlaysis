@@ -16,19 +16,15 @@ import DifferentialFannoPressureDrop as FannoF
 #Inputting Minor/Major Losses
 #NOTE:any value that is zero should be written as 1e-16 to avoid errors
 
-#Minor/Major Loss calculations:
-#https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=89965144
-Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078]
-Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635]
-Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398]
-epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm#https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
-#https://www.enggcyclopedia.com/2011/09/absolute-roughness/ aluminum/steel roughness
+
 def psi_to_MPa(psi):
     return  0.00689*psi
 
 
 def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=False,plots=True):
     Kvec,Lvec,Dvec,epsvec = pipeSysProp
+    
+
     pipeSegments = len(Kvec)
     soln = np.zeros((5,pipeSegments))
     pDropvec = np.zeros(pipeSegments)
@@ -112,6 +108,7 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
     return soln,fullArrayFlowData, PdropTotal/1e6
 #%%
 if __name__ == '__main__':
+
     mdot = 0.3 #mass flow rate [kg/s]
     T0 = 300# #ambient temperature [K]/stagnation
     stag = T0
@@ -126,9 +123,15 @@ if __name__ == '__main__':
     MW = gas.mean_molecular_weight
     step = 0.001 #(m) break tube up into 1mm increments
     #for loss calculations https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=0
-
-    LineLoss = LineAnalysis(mdot, T0, P1, gas, gamma, step)
-    #print(LineLoss.)
+    #Minor/Major Loss calculations:
+    #https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=89965144
+    Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078]
+    Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635]
+    Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398]
+    epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm#https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
+    #https://www.enggcyclopedia.com/2011/09/absolute-roughness/ aluminum/steel roughness
+    pipeSysProp1 = [Kvec,Lvec,Dvec,epsvec]
+    LineLoss = LineAnalysis(mdot, T0, P1, gas, gamma, step,pipeSysProp1,)
     T = LineLoss[0][2,0] #initial temperature (this is the temperature after one step)
     P = (LineLoss[0][0,-1])/1e6
     PdropTotal = LineLoss[2]
