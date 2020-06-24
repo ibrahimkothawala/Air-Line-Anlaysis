@@ -28,6 +28,7 @@ Tstag = T0
 gas = ct.Solution('air.cti') 
 pressureRange = np.linspace(1200,1515,npts)
 soln = np.zeros((7,npts))
+pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
 for ii in range(npts):
 
@@ -46,7 +47,7 @@ for ii in range(npts):
     step = 0.001 #(m) break tube up into 1mm increments
     #for loss calculations https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=0
     try:
-        LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, plots=False)
+        LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, pipeSysProp,plots=False)
     except:
         print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+"psi")
         continue     
