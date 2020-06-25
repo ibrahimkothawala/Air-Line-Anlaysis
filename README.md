@@ -20,6 +20,9 @@ Density, viscosity, and molecular weight are needed in order to perform the fann
 In order to calculate the pressure drop in pipes due to skin friction the friction factor must be calculated. This is done in frictionFactor.py where both an approximation of the Colebrook equation and the Colebrook equation itself are used to determine the friction factor. A log-log plot of the friction factor at different reynolds numbers and pipe roughness is done to show model agreement and comparison to the moody diagram.
 
 ### Pressure drop in the pipe segments
-The pipe segment is broken into 1 mm long pipe segments. This is done because as the gas moves down the pipe the pressure increases causing the velocity and the friction factor to increase. 1 mm was chosen because at that length the pressure drop and resultant friction factor increase was deemed negligible. First fL/D max is calculated then the fL/D actual is calculated the difference between them is used to calculate the pressure, velocity, and density at the end of the segment.
+The pipe segment is broken into 1 mm long pipe segments. This is done because as the gas moves down the pipe the pressure increases causing the velocity and the friction factor to increase. 1 mm was chosen because at that length the pressure drop and resultant friction factor increase was deemed negligible. First fL/D max is calculated then the fL/D actual is calculated, for the pipe segment, the difference between them is used to calculate the pressure, velocity, and density at the end of the segment.
 
 ### Pressure drop in a valve or fitting
+Since fL/D is equivalent to the a valve or fittings coefficient K, that is substituted into where fL/D actual goes. Then the algorithm continues as it would in the pressure drop across a pipe segment. 
+
+## How does Air Line Analysis size an Orifice? 
