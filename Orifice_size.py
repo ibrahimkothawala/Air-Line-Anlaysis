@@ -82,11 +82,11 @@ for ii in range(npts):
     #mdot check
     #pg 602 gas dynamics James E. John
 
-    orificeAmin = mdot/((np.sqrt(((2/(gamma - 1)*(P2Goal/P0)**(2/gamma)*((P0/P2Goal)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P2Goal/P0)**(1/gamma)))*rho_o*a_o)
+    orificeAmin = mdot/((np.sqrt(((2/(gamma - 1)*(P2Goal/P0)**(2/gamma)*((P0/P2Goal)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P2Goal/P0)**(1/gamma)))*rho_o*a_o) # eqn 15.47
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi)
     d_inchesMin = d_orificeMin/0.0254
 
-    P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6)
+    P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6) #eqn 15.45
 
     #observe any corrections due to standard orifice sizing
     dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
