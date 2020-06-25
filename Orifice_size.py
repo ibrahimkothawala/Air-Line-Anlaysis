@@ -93,12 +93,12 @@ for ii in range(npts):
     dPurchase = d_orificeMin
     Apurchase = np.pi*(dPurchase/2)**2 #m^2 
     #theoretical maximum from purchased orifice
-    mdotPurchase = (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*Apurchase
+    mdotPurchase = (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*Apurchase# eqn 15.47
     #solve for downstream pressure after orifice, want to equal goal P
-    P4 = fsolve(lambda P: - mdotPurchase + (np.sqrt(((2/(gamma - 1)*(P/P0)**(2/gamma)*((P0/P)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P/P0)**(1/gamma)))*rho_o*a_o*Apurchase, 2.0684e6)
+    P4 = fsolve(lambda P: - mdotPurchase + (np.sqrt(((2/(gamma - 1)*(P/P0)**(2/gamma)*((P0/P)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P/P0)**(1/gamma)))*rho_o*a_o*Apurchase, 2.0684e6) #eqn 15.45
     #if the following downstream pressure is observed in experimentation, this is the
     #flow rate 
-    mdotExperimental = (np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o*Apurchase
+    mdotExperimental = (np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o*Apurchase #15.
 
     #mdot check other #pg. 79 gas dynamics
     #theoretical max based off of stagnation properties and calculated orifice diameter
