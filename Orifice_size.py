@@ -34,18 +34,23 @@ pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 
 #equation 15.44 inputs: stagnation density, stagnation speed of sound, stagnation pressure, pressure after orifice. 
 #returns the value of the fractional section in eqn 15.44 including the stagnation density
-def eqn1544Helper(rho_o,a_o,P0,P4):
+def eqn1544Helper(gamma,rho_o,a_o,P0,P4):
     return ((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
 
 #equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, pressure after orifice, mass flow rate thru orifice. 
 #returns the area of the orifice that outputs the given mass flowrate at the given inputs.
-def orificeThroatArea(rho_o,a_o,P0,P4,mdot):
-    return mdot/eqn1544Helper(rho_o,a_o,P0,P4)
+def orificeThroatArea(gamma,rho_o,a_o,P0,P4,mdot):
+    return mdot/eqn1544Helper(gamma,rho_o,a_o,P0,P4)
 
 #equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, mass flow rate thru orifice, orifice throat area, and a guess for the pressure after the orifice. 
 #returns the pressure after the orifice for the given mass flow rate and the inputs above.
-def pressureAfterOrifice(rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
-    return fsolve(lambda Pout: - mdot + eqn1544Helper(rho_o,a_o,P0,Pout)*orificeThroatArea,P4_guess) #eqn 15.44
+def pressureAfterOrifice(gamma,rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
+    return fsolve(lambda Pout: - mdot + eqn1544Helper(gamma,rho_o,a_o,P0,Pout)*orificeThroatArea,P4_guess) #eqn 15.44
+
+#equation 15.47 inputs: stagnation density, stagnation speed of sound, orifice throat area
+#returns the maximum massflowrate possible thru an orifice of that area. 
+def maxMassFlowRate(gamma,rho_o,a_o,orificeThroatArea):
+    return (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*orificeThroatArea
 
 
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
@@ -68,7 +73,7 @@ for ii in range(npts):
     try:
         LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, pipeSysProp,plots=False)
     except:
-        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+"psi")
+        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+" psi")
         continue     
         
     
@@ -100,20 +105,17 @@ for ii in range(npts):
     #%%
     #mdot check
     #pg 602 gas dynamics James E. John
-
-    #orificeAmin = mdot/((np.sqrt(((2/(gamma - 1)*(P2Goal/P0)**(2/gamma)*((P0/P2Goal)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P2Goal/P0)**(1/gamma)))*rho_o*a_o) # eqn 15.44
-    orificeAmin = orificeThroatArea(rho_o,a_o,P0,P2Goal,mdot)
+    orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot)
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi)
     d_inchesMin = d_orificeMin/0.0254
-
-    P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6) #eqn 15.44
+    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, 2.0684e6)
 
     #observe any corrections due to standard orifice sizing
     dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
     dPurchase = d_orificeMin
     Apurchase = np.pi*(dPurchase/2)**2 #m^2 
     #theoretical maximum from purchased orifice
-    mdotPurchase = (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*Apurchase# eqn 15.47
+    mdotPurchase = maxMassFlowRate(gamma,rho_o,a_o,Apurchase) # eqn 15.47
     #solve for downstream pressure after orifice, want to equal goal P
     P4 = fsolve(lambda P: - mdotPurchase + (np.sqrt(((2/(gamma - 1)*(P/P0)**(2/gamma)*((P0/P)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P/P0)**(1/gamma)))*rho_o*a_o*Apurchase, 2.0684e6) #eqn 15.45
     #if the following downstream pressure is observed in experimentation, this is the
