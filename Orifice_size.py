@@ -151,11 +151,13 @@ for ii in range(npts):
         print('mdot theoretical from stagnation properties', mdotmaxO, '(kg/s)\n')
         
         soln[:,ii] =[P4_real,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
-#write helper function to delete zeros of soln vector
+
 #%%
 xlabel = 'Upstream Pressure (MPa)'
+#hides all zeros in soln caused by non real results.
 soln2 = np.ma.masked_equal(soln,0)
 
+#plotting
 fig, axs = plt.subplots(2, 1, constrained_layout=True)
 axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[0,:]/1e6,'-',label = 'Pressure after Orifice')
 axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[1,:],'-', label = 'Delta P Across Lines')
