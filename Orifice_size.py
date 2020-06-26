@@ -63,8 +63,8 @@ for ii in range(npts):
 
     InitialPressure = pressureRange[ii] #Insert pressure at pressure regulator here in PSI
     InitialPressure = pDropCalc.psi_to_MPa(InitialPressure)*1e6
-    #define gas
     
+    #define gas
     gas.transport_model = 'Mix'
     gas.TPX = T0,InitialPressure,{'O2':1,'N2':3.76}
     R = 8.314
@@ -75,20 +75,18 @@ for ii in range(npts):
     #step size for analysis
     step = 0.001 #(m) break tube up into 1mm increments
     #for loss calculations https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=0
+    
+    #try catch statement for when the mach number exceeds 1
     try:
         LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, pipeSysProp,plots=False)
     except:
         print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+" psi")
         continue     
         
-    
-
     #print(LineLoss.)
     T_static = LineLoss[0][2,0] #initial temperature (this is the temperature after one step)
     P_static = (LineLoss[0][1,-1])# pressure upstream of the orifice 
     PdropLines = LineLoss[2]#Pressure drop across the lines 
-
-
 
     #%%
     Rspec = R/MW*1000 #J/kg-K
@@ -110,10 +108,10 @@ for ii in range(npts):
     #%%
     #mdot check
     #pg 602 gas dynamics James E. John
-    orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot)
-    d_orificeMin = np.sqrt((orificeAmin*4)/np.pi)
+    orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot) #15.44
+    d_orificeMin = np.sqrt((orificeAmin*4)/np.pi) 
     d_inchesMin = d_orificeMin/0.0254
-    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, 2.0684e6)
+    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, 2.0684e6) #15.44
 
     #observe any corrections due to standard orifice sizing
     dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
@@ -124,7 +122,7 @@ for ii in range(npts):
     #solve for downstream pressure after orifice, want to equal goal P
     P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0,mdotPurchase, Apurchase,2.0684e6) #eqn 15.44
     #if the following downstream pressure is observed in experimentation, this is the flow rate 
-    mdotExperimental = massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,Apurchase) #eqn 15.45
+    mdotExperimental = massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,Apurchase) #eqn 15.44
 
     #mdot check other #pg. 79 gas dynamics
     #theoretical max based off of stagnation properties and calculated orifice diameter
