@@ -37,6 +37,11 @@ pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 def eqn1544Helper(gamma,rho_o,a_o,P0,P4):
     return ((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
 
+#equation 15.44 inputs: stagnation density, stagnation speed of sound, stagnation pressure, pressure after orifice, orifice throat area.
+#returns the mass flow rate through an orifice of the given dimensions at the given pressures. 
+def massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,orificeThroatArea):
+    return eqn1544Helper(gamma,rho_o,a_o,P0,P4)*orificeThroatArea
+
 #equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, pressure after orifice, mass flow rate thru orifice. 
 #returns the area of the orifice that outputs the given mass flowrate at the given inputs.
 def orificeThroatArea(gamma,rho_o,a_o,P0,P4,mdot):
