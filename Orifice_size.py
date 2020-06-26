@@ -108,12 +108,14 @@ for ii in range(npts):
     #%%
     #mdot check
     #pg 602 gas dynamics James E. John
+    #theoretical orifice size
     orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot) #15.44
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi) 
     d_inchesMin = d_orificeMin/0.0254
     P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, 2.0684e6) #15.44
 
     #observe any corrections due to standard orifice sizing
+    #Purchased orifice size 
     dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
     dPurchase = d_orificeMin
     Apurchase = np.pi*(dPurchase/2)**2 #m^2 
