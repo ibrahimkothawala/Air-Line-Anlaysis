@@ -123,8 +123,7 @@ for ii in range(npts):
     mdotPurchase = maxMassFlowRate(gamma,rho_o,a_o,Apurchase) # eqn 15.47
     #solve for downstream pressure after orifice, want to equal goal P
     P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0,mdotPurchase, Apurchase,2.0684e6) #eqn 15.44
-    #if the following downstream pressure is observed in experimentation, this is the
-    #flow rate 
+    #if the following downstream pressure is observed in experimentation, this is the flow rate 
     mdotExperimental = massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,Apurchase) #eqn 15.45
 
     #mdot check other #pg. 79 gas dynamics
