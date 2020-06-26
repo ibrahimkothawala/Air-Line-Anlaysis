@@ -33,9 +33,12 @@ pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 #orifice sizing functions
 
 #equation 15.44 inputs: stagnation density, stagnation speed of sound, area of orifice throat, stagnation pressure, pressure after orifice. 
-#returns the area of an orifice that would give that mass flowrate given the above inputs.
+#returns the value of the fractional section in eqn 15.44 including the stagnation density
+def eqn1544Helper(rho_o,a_o,P0,P4):
+    return ((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
+
 def orificeThroatArea(rho_o,a_o,P0,P4,mdot):
-    return mdot/((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
+    return mdot/eqn1544Helper(rho_o,a_o,P0,P4)
 
 
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
@@ -96,7 +99,7 @@ for ii in range(npts):
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi)
     d_inchesMin = d_orificeMin/0.0254
 
-    P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6) #eqn 15.45
+    P4_real = fsolve(lambda Pout: - mdot + (np.sqrt(((2/(gamma - 1)*(Pout/P0)**(2/gamma)*((P0/Pout)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(Pout/P0)**(1/gamma)))*rho_o*a_o*orificeAmin, 2.0684e6) #eqn 15.44
 
     #observe any corrections due to standard orifice sizing
     dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
