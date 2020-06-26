@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 #Orifice Plate try 300
 #&&Cantera
 #Inputs
-Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078]
-Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635]
-Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398]
+Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078] #valve and fitting coefficients
+Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635] #lengths of pipes in between valves and fittings
+Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398] #diameters of pipes in between valves and fittings
 epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm #https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
 dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
 mdot = 0.3 #mass flow rate [kg/s]
