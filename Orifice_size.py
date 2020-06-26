@@ -45,7 +45,7 @@ def orificeThroatArea(rho_o,a_o,P0,P4,mdot):
 #equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, mass flow rate thru orifice, orifice throat area, and a guess for the pressure after the orifice. 
 #returns the pressure after the orifice for the given mass flow rate and the inputs above.
 def pressureAfterOrifice(rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
-    fsolve(lambda Pout: - mdot + eqn1544Helper(rho_o,a_o,P0,Pout)*orificeThroatArea,P4_guess) #eqn 15.44
+    return fsolve(lambda Pout: - mdot + eqn1544Helper(rho_o,a_o,P0,Pout)*orificeThroatArea,P4_guess) #eqn 15.44
 
 
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
