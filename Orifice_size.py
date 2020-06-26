@@ -32,13 +32,20 @@ pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 
 #orifice sizing functions
 
-#equation 15.44 inputs: stagnation density, stagnation speed of sound, area of orifice throat, stagnation pressure, pressure after orifice. 
+#equation 15.44 inputs: stagnation density, stagnation speed of sound, stagnation pressure, pressure after orifice. 
 #returns the value of the fractional section in eqn 15.44 including the stagnation density
 def eqn1544Helper(rho_o,a_o,P0,P4):
     return ((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
 
+#equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, pressure after orifice, mass flow rate thru orifice. 
+#returns the area of the orifice that outputs the given mass flowrate at the given inputs.
 def orificeThroatArea(rho_o,a_o,P0,P4,mdot):
     return mdot/eqn1544Helper(rho_o,a_o,P0,P4)
+
+#equation 15.44 inputs: stagnation density, stagnation speed of sound,stagnation pressure, mass flow rate thru orifice, orifice throat area, and a guess for the pressure after the orifice. 
+#returns the pressure after the orifice for the given mass flow rate and the inputs above.
+def pressureAfterOrifice(rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
+    fsolve(lambda Pout: - mdot + eqn1544Helper(rho_o,a_o,P0,Pout)*orificeThroatArea,P4_guess) #eqn 15.44
 
 
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
