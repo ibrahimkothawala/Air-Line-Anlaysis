@@ -20,7 +20,7 @@ Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078]
 Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635]
 Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398]
 epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm #https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
-dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availabality or other suppliers
+dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
 mdot = 0.3 #mass flow rate [kg/s]
 T0 = 300# #ambient temperature [K]/stagnation
 npts = 5
@@ -29,6 +29,15 @@ gas = ct.Solution('air.cti')
 pressureRange = np.linspace(1200,1515,npts)
 soln = np.zeros((7,npts))
 pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
+
+#orifice sizing functions
+
+#equation 15.44 inputs: stagnation density, stagnation speed of sound, area of orifice throat, stagnation pressure, pressure after orifice. 
+#returns the area of an orifice that would give that mass flowrate given the above inputs.
+def orificeThroatArea(rho_o,a_o,P0,P4,mdot):
+    return mdot/((np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o)
+
+
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
 for ii in range(npts):
 
@@ -72,7 +81,7 @@ for ii in range(npts):
     Ainit = np.pi*(D_1/2)**2
     u = mdot/(rhoInit*Ainit)
     dynamicP = 0.5*rhoInit*u**2
-    P0 = InitialPressure + dynamicP #Pascals
+    P0 = InitialPressure + dynamicP #Pascals stagnation pressure
     a_o = np.sqrt(gamma*Rspec*T0) #stagnation speed of sound, stagnation properties
     rho_o = P0/(Rspec*T0) #stagnation density
 
@@ -82,7 +91,8 @@ for ii in range(npts):
     #mdot check
     #pg 602 gas dynamics James E. John
 
-    orificeAmin = mdot/((np.sqrt(((2/(gamma - 1)*(P2Goal/P0)**(2/gamma)*((P0/P2Goal)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P2Goal/P0)**(1/gamma)))*rho_o*a_o) # eqn 15.47
+    #orificeAmin = mdot/((np.sqrt(((2/(gamma - 1)*(P2Goal/P0)**(2/gamma)*((P0/P2Goal)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P2Goal/P0)**(1/gamma)))*rho_o*a_o) # eqn 15.44
+    orificeAmin = orificeThroatArea(rho_o,a_o,P0,P2Goal,mdot)
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi)
     d_inchesMin = d_orificeMin/0.0254
 
@@ -98,7 +108,7 @@ for ii in range(npts):
     P4 = fsolve(lambda P: - mdotPurchase + (np.sqrt(((2/(gamma - 1)*(P/P0)**(2/gamma)*((P0/P)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P/P0)**(1/gamma)))*rho_o*a_o*Apurchase, 2.0684e6) #eqn 15.45
     #if the following downstream pressure is observed in experimentation, this is the
     #flow rate 
-    mdotExperimental = (np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o*Apurchase #15.
+    mdotExperimental = (np.sqrt(((2/(gamma - 1)*(P4/P0)**(2/gamma)*((P0/P4)**((gamma - 1)/gamma) - 1))))/(1+(2/np.pi)*(P4/P0)**(1/gamma)))*rho_o*a_o*Apurchase #15.45
 
     #mdot check other #pg. 79 gas dynamics
     #theoretical max based off of stagnation properties and calculated orifice diameter
@@ -177,7 +187,7 @@ plt.show()
 #minimum required to choke the flow across the orifice
 
 
-#mdotPurchase is a theoretical flow rate ahiceved based off stagnation conditions
+#mdotPurchase is a theoretical flow rate achieved based off stagnation conditions
 #and given orifice diameter (dPurchase)
 
 #P4 is a calculation to determine the downstream pressure in the theoretical case of 
