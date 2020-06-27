@@ -5,6 +5,7 @@ import frictionFactor as ff
 import cantera as ct
 import matplotlib.pyplot as plt
 import DifferentialFannoPressureDrop as DFP
+import Orifice_size as ORS
 
 
 
@@ -17,7 +18,7 @@ R = 8.314
 D_1 = 0.004572 #tube diameter (m) out of pressure regulator is 1/4" flex tube
 
 #%% Calculated Inputs
-Ainit = np.pi*(D_1/2)**2
+Ainit = np.pi*(D_1/2)**2 #area of the tube after the regulator
 
 
 
@@ -44,4 +45,5 @@ for ii in range(pts):
     a_o = np.sqrt(gamma*Rspec*T0) #stagnation speed of sound, stagnation properties
     rho_o = P0/(Rspec*T0) #stagnation density
 
+    
 
