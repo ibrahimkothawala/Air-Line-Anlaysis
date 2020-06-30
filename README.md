@@ -2,10 +2,10 @@
 This calculator is used to determine the pressure drop of the gaseous oxidizer in our propellent delivery system and to size the orifice which acts as the oxidizer injector. 
 
 # Required Libraries
--Numpy
--Cantera
--Matplotlib
--Scipy
+- Numpy
+- Cantera
+- Matplotlib
+- Scipy
 
 ## How does Air Line Analysis calculate pressure drop?
 It utilizes the fanno flow model for compressible gasses in pipes. A compressible model was utilized instead of an incompressible model in order to capture the density changes that would occur as the pressure within the system dropped due to friction. In addition Fanno Flow assumes the flow to be adiabatic. This model assumption is the most likely to fail. To learn more about fanno flow and the governing equations read chapter 6 of The Dynamics and Thermodynamics of COMPRESSIBLE FLUID FLOW by Ascher Shapiro. The pressure drop is calculated using DifferentialFannoPressureDrop.py. LineLossAnalysis utilizes DifferentialFannoPressureDrop.py to calculate the pressure drop across the entire pipe system. The pressure drop across the orifice utilizes a different model which will be discussed in a further section. 
@@ -27,3 +27,11 @@ Since fL/D is equivalent to the a valve or fittings coefficient K, that is subst
 
 ## How does Air Line Analysis size an Orifice? 
 First a theoretical orifice area is determined by setting the ratio of the upstream pressure to the downstream pressure to be 1.528 using eqn 15.44 in Gas Dynamics by James E. John. Pressure ratios higher than this will create choked flow (find ref). The pressure upstream of the orifice is determined using the fanno flow analysis and is the exit pressure of the piping system. Once the area is determined, the pressure downstream of the theoretical orifice is solved for using eqn 15.44 in Gas Dynamics. Since the theoretical area may not be available to purchase, the closest size smaller than the theoretical area that can be purchased should be inputted manually. It is already done for our case. The maximum mass flow rate that can be achieved by using the purchased orifice is then calculated using eqn 15.47 in Gas Dynamics and the pressure downstream of the orifice is calculated using eqn 15.44 using that maximum mass flow rate. Then using the downstream pressure calculated in the previous step a mass flow rate is determined using eqn 15.44. 
+
+## Potential Future Features
+- add another loop within orifice sizing to account for different mass flowrates through the orifice and lines. Sometimes the orifice flow meter calculates a different mass flowrate through the orifice then is used in the line analysis, therefore the line analysis must be redone with the new mass flowrate and iterated until the massflowrates converge onto a single value.
+
+- create a class based structure for the piping systems, with valves, pipe segments, and orifices being their own classes.
+
+## Bugs
+
