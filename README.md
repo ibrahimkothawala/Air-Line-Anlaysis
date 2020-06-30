@@ -35,3 +35,5 @@ First a theoretical orifice area is determined by setting the ratio of the upstr
 
 ## Bugs
 - currently Orifice_size.py assumes the stagnation pressure remains constant throughout the line which is incorrect. Look at page 166 in The Dynamics and Thermodynamics of Compressible Flow. 
+
+- Orifice_size.py has redundant functions specifically pressureAfterOrifice. Need to do more testing to find other redundant functions.
