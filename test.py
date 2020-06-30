@@ -12,7 +12,7 @@ import Orifice_size as ORS
 #%% Inputs
 pts = 100
 mdot = 0.3 #mass flow rate [kg/s]
-T0 = 300# #ambient temperature [K]/stagnation
+T0 = 300# #ambient temperature [K]/stagnation (stagnation temperature remains constant in fanno flow see https://en.wikipedia.org/wiki/Fanno_flow)
 P1_range = np.linspace(1000,2000,pts)
 R = 8.314
 D_1 = 0.004572 #tube diameter (m) out of pressure regulator is 1/4" flex tube
