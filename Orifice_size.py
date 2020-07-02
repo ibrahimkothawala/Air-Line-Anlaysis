@@ -181,7 +181,6 @@ axs[1].legend(loc='upper left')
 plt.show()
 
 
-#plt.show()
 #Explanation of Results
 
 #mdotmax0 is a theoretical maximum flow rate based off a given orifice diameter
