@@ -163,9 +163,9 @@ soln2 = np.ma.masked_equal(soln,0)
 #plotting
 fig, axs = plt.subplots(2, 1, constrained_layout=True)
 axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[0,:]/1e6,'-',label = 'Pressure after Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[1,:],'-', label = 'Delta P Across Lines')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[2,:],'-', label = 'Delta P Across Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[3,:],'-', label = 'Total Delta P')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[1,:],'-', label = 'Delta P Across Lines')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[2,:],'-', label = 'Delta P Across Orifice')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[3,:],'-', label = 'Total Delta P')
 axs[0].legend()
 axs[0].set_title('Changes in System Pressures with Upstream Pressure')
 axs[0].set_xlabel(xlabel)
@@ -178,6 +178,7 @@ axs[1].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[5,:], '-',label = 'Mdot Exper
 axs[1].set_xlabel(xlabel)
 axs[1].set_title('Orifice Properties Against Upstream Pressure')
 axs[1].legend(loc='upper left')
+plt.show()
 
 
 #plt.show()
