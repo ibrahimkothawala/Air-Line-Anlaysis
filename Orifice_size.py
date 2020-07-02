@@ -13,21 +13,27 @@ import LineLossAnalysis as pDropCalc
 import cantera as ct
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
-#Orifice Plate try 300
+
 #&&Cantera
+gas = ct.Solution('air.cti') 
+gasMolar = {'O2':1,'N2':3.76} #define gas and molar ratio
 #Inputs
+dPurchase = 0.16 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
+C_d = 0.7 #drilled orifice Cd
+D_1 = 0.004572 #Initial upstream tube diameter (m) (right after the regulator)
+
+mdot = 0.3 #mass flow rate [kg/s]
+T0 = 300# #ambient temperature [K]/stagnation
+P2Goal = 300 #[PSI] #goal Pressure (chamber pressure)
+step = 0.001 #(m) #step size for line loss analysis
+npts = 35 #number of pressure points for analysis
+pressureRange = np.linspace(1400,1800,npts)
+soln = np.zeros((7,npts))
+
 Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078] #valve and fitting coefficients
 Lvec = [1e-16, 1e-16, 1.2192, 0.5461, 1.5367, 1.2192, 0.0635] #lengths of pipes in between valves and fittings
 Dvec = [0.004572, 0.009398, 0.008636, 0.009398, 0.009398, 0.008636,0.009398] #diameters of pipes in between valves and fittings
 epsvec = [0.015e-3, 0.015e-3, 3e-6, 0.015e-3, 0.001e-3, 3e-6, 0.015e-3]  #mm #https://www.engineeringtoolbox.com/lined-pipe-pressure-loss-d_1178.html ptfe roughness for flex hose
-dPurchase = 0.18 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
-mdot = 0.3 #mass flow rate [kg/s]
-T0 = 300# #ambient temperature [K]/stagnation
-npts = 5
-Tstag = T0
-gas = ct.Solution('air.cti') 
-pressureRange = np.linspace(1200,1515,npts)
-soln = np.zeros((7,npts))
 pipeSysProp = [Kvec,Lvec,Dvec,epsvec]
 
 #orifice sizing functions
@@ -57,30 +63,34 @@ def pressureAfterOrifice(gamma,rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
 def maxMassFlowRate(gamma,rho_o,a_o,orificeThroatArea):
     return (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*orificeThroatArea
 
+def PchokeCondition(gamma): #pressure ratio of Pthroat/Pdownstream to velocity choke flow
+    return (2/(gamma + 1))**(gamma/(gamma-1))
 
 #Evaluate different upstream pressures from 450 to 1500 PSI then graph results
+P2Goal = pDropCalc.psi_to_MPa(P2Goal)*1e6 #[Pa]
+dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
+
 for ii in range(npts):
 
     InitialPressure = pressureRange[ii] #Insert pressure at pressure regulator here in PSI
-    InitialPressure = pDropCalc.psi_to_MPa(InitialPressure)*1e6
+    InitialPressure = pDropCalc.psi_to_MPa(InitialPressure)*1e6 #Pascals
     
     #define gas
     gas.transport_model = 'Mix'
-    gas.TPX = T0,InitialPressure,{'O2':1,'N2':3.76}
+    gas.TPX = T0,InitialPressure, gasMolar
     R = 8.314
     gamma = gas.cp/gas.cv
     MW = gas.mean_molecular_weight
     gas.basis = 'mass'
     rhoInit = gas.density #initial density at the beginning of the system
-    #step size for analysis
-    step = 0.001 #(m) break tube up into 1mm increments
+    Rspec = R/MW*1000 #J/kg-K
     #for loss calculations https://docs.google.com/spreadsheets/d/1gn8gLvc1uLY0blPmABOoTxjrHLD8UaT0t1OvKjpqaj4/edit#gid=0
     
     #try catch statement for when the mach number exceeds 1
     try:
         LineLoss = pDropCalc.LineAnalysis(mdot, T0, InitialPressure, gas, gamma, step, pipeSysProp,plots=False)
     except:
-        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+"kg/s and this pressure "+str(pressureRange[ii])+" psi")
+        print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+" kg/s and this pressure "+str('%.2f'%pressureRange[ii])+" PSI")
         continue     
         
     #print(LineLoss.)
@@ -89,13 +99,12 @@ for ii in range(npts):
     PdropLines = LineLoss[2]#Pressure drop across the lines 
 
     #%%
-    Rspec = R/MW*1000 #J/kg-K
-    C_d = 0.99 #machined venturi #https://neutrium.net/fluid_flow/discharge-coefficient-for-nozzles-and-orifices/
-    #goal Downstream pressure
-    P2Goal = P_static/1.528 # the 1.528 is the pressure ratio required for choked flow (find ref) #MPa
-
+    
+    
+    #minimum downstream pressure to choke flow
+    MinimumPressure = P_static/(1+PchokeCondition(gamma)) # 
+    
     #stagnation properties calcs
-    D_1 = 0.004572 #tube diameter (m) out of pressure regulator is 1/4" flex tube
     Ainit = np.pi*(D_1/2)**2
     u = mdot/(rhoInit*Ainit)
     dynamicP = 0.5*rhoInit*u**2
@@ -108,49 +117,43 @@ for ii in range(npts):
     #%%
     #mdot check
     #pg 602 gas dynamics James E. John
+    #given flow rate, what diameter is required, and outlet pressure associated:
     orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot) #15.44
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi) 
     d_inchesMin = d_orificeMin/0.0254
-    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, 2.0684e6) #15.44
-
+    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, P2Goal) #15.44
+    
+    #given diameter, what mdot is achieved and downstream pressure:
     #observe any corrections due to standard orifice sizing
-    dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
-    dPurchase = d_orificeMin
+    
     Apurchase = np.pi*(dPurchase/2)**2 #m^2 
     #theoretical maximum from purchased orifice
     mdotPurchase = maxMassFlowRate(gamma,rho_o,a_o,Apurchase) # eqn 15.47
     #solve for downstream pressure after orifice, want to equal goal P
-    P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0,mdotPurchase, Apurchase,2.0684e6) #eqn 15.44
+    P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0,mdotPurchase, Apurchase,P2Goal) #eqn 15.44
     #if the following downstream pressure is observed in experimentation, this is the flow rate 
     mdotExperimental = massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,Apurchase) #eqn 15.44
 
-    #mdot check other #pg. 79 gas dynamics
-    #theoretical max based off of stagnation properties and calculated orifice diameter
-    mdotmaxO = 0.040418*P0*orificeAmin/np.sqrt(T0) 
-    Acrit = mdot*np.sqrt(T0)/(0.040418*P0)
-    dcrit = np.sqrt((4*Acrit)/(np.pi))/0.0254 #in
-
-    #calculation of P* for choking condition (relevance unknown)
-    Pstar = (2/(gamma + 1))**(gamma/(gamma - 1))*P0
-    PdropOrifice = (P_static - P4_real)*1e-6
+    PdropOrifice = (P_static - P4)*1e-6
     if PdropOrifice < 0.0:
         soln[:,ii] = np.zeros((len(soln[:,ii])))
+        print("Upstream pressure data point thrown of "+str('%.2f'%pressureRange[ii])+" PSI out as pressure drop across orifice is too high, need more upstream pressure.")
     else:
         PdropSystem = (PdropLines + PdropOrifice)
         print('\nOrifice Results:')
+        print('Orifice diameter:', dPurchase/0.0254,'(in)')
         print('Upstream Pressure:', InitialPressure*1e-6,'(MPa)')
-        print('Solved orifice diameter (purchase one close to this)',d_inchesMin,'(in)')
-        print('critical orifice diameter',dcrit,'(in)')
-        print('Pressure entering chamber',P4_real*1e-6,'(MPa)')
-        print('Pressure entering chamber',P4_real*1e-6*145.038,'(PSI)')
+        print('Upstream Pressure:', InitialPressure*1e-6*145.038,'(PSI)')
+        print('Pressure before orifice:', P_static*1e-6,'(MPa)')
+        print('Pressure entering chamber',P4*1e-6,'(MPa)')
+        print('Pressure entering chamber',P4*1e-6*145.038,'(PSI)')
+        print('Minimum downstream pressure to choke', MinimumPressure*1e-6,'(MPa)')
         print('Pressure drop across lines', PdropLines,'(MPa)')
         print('Pressure drop across orifice ',PdropOrifice,'(MPa)')
         print('Total Pressure drop across system', PdropSystem,'(MPa)')
         print('mdot from experimentation from purchased orifice', mdotExperimental, '(kg/s)')
-        print('mdot theoretical max from calculated downstream pressure', mdotPurchase, '(kg/s)')
-        print('mdot theoretical from stagnation properties', mdotmaxO, '(kg/s)\n')
-        
-        soln[:,ii] =[P4_real,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
+              
+        soln[:,ii] =[P4,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
 
 #%%
 xlabel = 'Upstream Pressure (MPa)'
@@ -160,25 +163,24 @@ soln2 = np.ma.masked_equal(soln,0)
 #plotting
 fig, axs = plt.subplots(2, 1, constrained_layout=True)
 axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[0,:]/1e6,'-',label = 'Pressure after Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[1,:],'-', label = 'Delta P Across Lines')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[2,:],'-', label = 'Delta P Across Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[3,:],'-', label = 'Total Delta P')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[1,:],'-', label = 'Delta P Across Lines')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[2,:],'-', label = 'Delta P Across Orifice')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[3,:],'-', label = 'Total Delta P')
 axs[0].legend()
 axs[0].set_title('Changes in System Pressures with Upstream Pressure')
 axs[0].set_xlabel(xlabel)
 axs[0].set_ylabel('Pressure (MPa)')
 #fig.suptitle(' Flow Results', fontsize=12)
 axs[1].set_ylabel('Orifice Diameter [in]')
-lns1 = axs[1].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[4,:], '-',label = 'Orifice Diameter [in]', color = 'tab:orange')
-ax2 = axs[1].twinx()
-ax2.set_ylabel('Mass Flowrate [kg/s]')
-lns2 = ax2.plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[5,:], 'o',label = 'Mdot Experimental [kg/s]', color = 'tab:blue')
+
+axs[1].set_ylabel('Mass Flowrate [kg/s]')
+axs[1].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[5,:], '-',label = 'Mdot Experimental [kg/s]', color = 'tab:blue')
 axs[1].set_xlabel(xlabel)
 axs[1].set_title('Orifice Properties Against Upstream Pressure')
-axs[1].legend(loc='upper right')
-ax2.legend(loc='right')
-
+axs[1].legend(loc='upper left')
 plt.show()
+
+
 #Explanation of Results
 
 #mdotmax0 is a theoretical maximum flow rate based off a given orifice diameter
