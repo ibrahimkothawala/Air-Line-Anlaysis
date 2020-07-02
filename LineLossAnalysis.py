@@ -18,7 +18,7 @@ import DifferentialFannoPressureDrop as FannoF
 
 
 def psi_to_MPa(psi):
-    return  0.00689*psi
+    return psi/145.038
 
 
 def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=False,plots=True):
@@ -77,7 +77,7 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
     soln[3,:] = rhovec
     soln[4,:] = viscvec
     PdropTotal = sum(soln[0,:])
-    print('\nTotal Pressure Drop Across System',PdropTotal/1e6,'(MPa)\n')
+    
     
     
     if plots:
