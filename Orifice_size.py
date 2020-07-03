@@ -63,6 +63,10 @@ def pressureAfterOrifice(gamma,rho_o,a_o,P0,mdot,orificeThroatArea,P4_guess):
 def maxMassFlowRate(gamma,rho_o,a_o,orificeThroatArea):
     return (((2/(gamma + 1))**((gamma + 1)/(2*(gamma -1)))))/(1 + (2/np.pi)*(gamma/(gamma + 1))**(1/(gamma - 1))) * rho_o* a_o*orificeThroatArea
 
+#reference: https://en.wikipedia.org/wiki/Choked_flow
+#inputs: gamma
+#returns the ratio of the critical downstream pressure to the upstream stagnation pressure. Downstream
+#pressures below the critical pressure will result in choked flow.
 def PchokeCondition(gamma): #pressure ratio of Pthroat/Pdownstream to velocity choke flow
     return (2/(gamma + 1))**(gamma/(gamma-1))
 
@@ -95,23 +99,18 @@ for ii in range(npts):
         print("Upstream pressure data point thrown out as flow Fanno choked at this mass flowrate: "+str(mdot)+" kg/s and this pressure "+str('%.2f'%pressureRange[ii])+" PSI")
         continue     
         
-    #print(LineLoss.)
     T_static = LineLoss[0][2,0] #initial temperature 
     P_static = (LineLoss[0][1,-1])# pressure upstream of the orifice 
     PdropLines = LineLoss[2]#Pressure drop across the lines 
-    P0 = LineLoss[0][5, -1]
+    P0 = LineLoss[0][5, -1] #stagnation pressure upstream of orifice
     P02vec[ii] = P0
     #%%
     
     
     #minimum downstream pressure to choke flow
-    MinimumPressure = P_static/(1+PchokeCondition(gamma)) # 
+    CriticalPressure = PchokeCondition(gamma)*P0 
     
     #stagnation properties calcs
-    Ainit = np.pi*(D_1/2)**2
-    u = mdot/(rhoInit*Ainit)
-    dynamicP = 0.5*rhoInit*u**2
-    #P0 = InitialPressure + dynamicP #Pascals stagnation pressure
     a_o = np.sqrt(gamma*Rspec*T0) #stagnation speed of sound, stagnation properties
     rho_o = P0/(Rspec*T0) #stagnation density
 
@@ -124,7 +123,6 @@ for ii in range(npts):
     orificeAmin = orificeThroatArea(gamma,rho_o,a_o,P0,P2Goal,mdot) #15.44
     d_orificeMin = np.sqrt((orificeAmin*4)/np.pi) 
     d_inchesMin = d_orificeMin/0.0254
-    P4_real = pressureAfterOrifice(gamma,rho_o, a_o, P0, mdot, orificeAmin, P2Goal) #15.44
     
     #given diameter, what mdot is achieved and downstream pressure:
     #observe any corrections due to standard orifice sizing
@@ -150,7 +148,7 @@ for ii in range(npts):
         print('Pressure before orifice:', P_static*1e-6,'(MPa)')
         print('Pressure entering chamber',P4*1e-6,'(MPa)')
         print('Pressure entering chamber',P4*1e-6*145.038,'(PSI)')
-        print('Minimum downstream pressure to choke', MinimumPressure*1e-6,'(MPa)')
+        print('Maximum downstream pressure that will still result in choked flow', CriticalPressure*1e-6,'(MPa)')
         print('Pressure drop across lines', PdropLines,'(MPa)')
         print('Pressure drop across orifice ',PdropOrifice,'(MPa)')
         print('Total Pressure drop across system', PdropSystem,'(MPa)')
