@@ -26,12 +26,13 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
     
 
     pipeSegments = len(Kvec)
-    soln = np.zeros((5,pipeSegments))
+    soln = np.zeros((6,pipeSegments))
     pDropvec = np.zeros(pipeSegments)
     Pvec = np.zeros(pipeSegments)
     Tvec = np.zeros(pipeSegments)
     rhovec = np.zeros(pipeSegments)
     viscvec = np.zeros(pipeSegments)
+    P02vec = np.zeros(pipeSegments)
 
     for ii in range(0,pipeSegments):
         flowData = FannoF.Fanno(mdot,T0,P1,gas, gamma, Dvec[ii], Lvec[ii], step, epsvec[ii], Kvec[ii],plots = False) #choose step size in this function
@@ -43,7 +44,8 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
             Lvector =  np.append(Lvector,np.arange(0,Lvec[ii],step)+np.add(Lvector[-1],0))
             
         
-        #obtain conditions at the end of the tube    
+        #obtain conditions at the end of the tube
+        P02 = flowData[1, int(Lvec[ii]/step -1)]
         P1 = flowData[1,int(Lvec[ii]/step-1)]    
         pDrop1 = flowData[7,int(Lvec[ii]/step-1)]
         T0 = flowData[0,int(Lvec[ii]/step-1)]
@@ -59,6 +61,8 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
         Tvec[ii] = T0
         rhovec[ii] = rho
         viscvec[ii] = visc
+        P02vec[ii] = P02
+        
         if intermediateOutputs:
             print('\nSection of analysis',ii)
             print('kReal',kReal)
@@ -71,11 +75,15 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
             print('visc',visc)
     
           
+    
     soln[0,:] = pDropvec
     soln[1,:] = Pvec
     soln[2,:] = Tvec
     soln[3,:] = rhovec
     soln[4,:] = viscvec
+    soln[5,:] = P02vec
+    
+    
     PdropTotal = sum(soln[0,:])
     
     

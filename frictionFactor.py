@@ -49,9 +49,6 @@ if __name__ == "__main__":
                 soln[len(funcs),jj,kk] = np.average(soln[:,jj,kk])
     for jj in range(len(e_range)):
             plt.loglog(Re_range,soln[0,jj,:],'-', color ='black')
-    plt.title('Moody Diagram Generated with different friction factor calculators')
-    plt.xlabel('Reynolds Number')
-    plt.ylabel('Friction Factor')
     plt.savefig('friction factor.png')
 
 

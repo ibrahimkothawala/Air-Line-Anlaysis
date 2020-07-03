@@ -35,6 +35,14 @@ def rhoRatio(mach1, mach2, gamma):
     rhoRatio2 = (1/mach2)*(((2+((gamma-1)*(mach2**2)/(gamma+1))))**0.5)
     return rhoRatio2/rhoRatio1
 
+def StagPratio(M1, M2, gamma):
+    return (M2/M1)*((2 + (gamma - 1)*M1**2)/(2 + (gamma - 1))*M2**2)**((gamma + 1)/(2*(gamma - 1)))
+
+def dynamicP(rho,u):
+    return 0.5*rho*u**2
+
+def StagRho(P0,T0, Rspec):
+    return P0/(Rspec*T0)
 
 
 def Fanno(mdot, T0, P1, gas, gamma, d, L, step, eps, sumK,plots=True):
@@ -65,12 +73,13 @@ def Fanno(mdot, T0, P1, gas, gamma, d, L, step, eps, sumK,plots=True):
     fLD1Total = np.zeros(len(Lvector))
     viscvec = np.zeros(len(Lvector))
     fLD2vec =  np.zeros(len(Lvector))
-    soln = np.zeros((11,len(Lvector)))
+    P0vec = np.zeros(len(Lvector))
+    soln = np.zeros((12,len(Lvector)))
     
     pDropTotal = 0
     T1 = T0
     M1 = u1/np.sqrt(gamma*Rspec*T1)
-    
+    P01 = dynamicP(rho,u1) + P1 #intial stag pressure
     if M1 > 0.98: #catch when the flow chokes and do not calculate that solution for faster run time
         raise Exception("Flow is Fanno choked, upstream pressure and mass flow rate combo invalid")
     
@@ -92,8 +101,10 @@ def Fanno(mdot, T0, P1, gas, gamma, d, L, step, eps, sumK,plots=True):
         pDropTotal = pDropTotal + pDrop
         T2 = (Tratio(M1, M2, gamma))*T1
         rho2 = rhoRatio(M1,M2,gamma)*rho1
-
+        P02 = StagPratio(M1, M2, gamma)
+        
         #reset values
+        P01 = P02
         u1 = mdot/(rho2*np.pi*((d/2)**2))
         rho1 = rho2
         T1 = T2
@@ -115,7 +126,9 @@ def Fanno(mdot, T0, P1, gas, gamma, d, L, step, eps, sumK,plots=True):
         pDropvec[i] = pDropTotal
         viscvec[i] = visc1
         fLD2vec[i] = fLD2
-
+        P0vec[i] = P01
+        
+       
         soln[0,:] = Tvec
         soln[1,:] = P2vec
         soln[2,:] = rhovec
@@ -127,6 +140,7 @@ def Fanno(mdot, T0, P1, gas, gamma, d, L, step, eps, sumK,plots=True):
         soln[8,:] = viscvec
         soln[9,:] = fLD1Total
         soln[10,:] = fLD2vec
+        soln[11,:] = P0vec
         
         
     if plots:    

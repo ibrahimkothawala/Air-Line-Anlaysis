@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 gas = ct.Solution('air.cti') 
 gasMolar = {'O2':1,'N2':3.76} #define gas and molar ratio
 #Inputs
-dPurchase = 0.16 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
+dPurchase = 0.25 #[inches] the size of the orifice based off of Mccmaster availability or other suppliers
 C_d = 0.7 #drilled orifice Cd
 D_1 = 0.004572 #Initial upstream tube diameter (m) (right after the regulator)
 
@@ -26,8 +26,8 @@ mdot = 0.3 #mass flow rate [kg/s]
 T0 = 300# #ambient temperature [K]/stagnation
 P2Goal = 300 #[PSI] #goal Pressure (chamber pressure)
 step = 0.001 #(m) #step size for line loss analysis
-npts = 35 #number of pressure points for analysis
-pressureRange = np.linspace(1400,1800,npts)
+npts = 30 #number of pressure points for analysis
+pressureRange = np.linspace(300,2500,npts)
 soln = np.zeros((7,npts))
 
 Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078] #valve and fitting coefficients
@@ -70,6 +70,8 @@ def PchokeCondition(gamma): #pressure ratio of Pthroat/Pdownstream to velocity c
 P2Goal = pDropCalc.psi_to_MPa(P2Goal)*1e6 #[Pa]
 dPurchase = dPurchase*0.0254 #purchase orifice size from mcmaster
 
+P02vec = np.zeros(npts)
+
 for ii in range(npts):
 
     InitialPressure = pressureRange[ii] #Insert pressure at pressure regulator here in PSI
@@ -94,10 +96,11 @@ for ii in range(npts):
         continue     
         
     #print(LineLoss.)
-    T_static = LineLoss[0][2,0] #initial temperature (this is the temperature after one step)
+    T_static = LineLoss[0][2,0] #initial temperature 
     P_static = (LineLoss[0][1,-1])# pressure upstream of the orifice 
     PdropLines = LineLoss[2]#Pressure drop across the lines 
-
+    P0 = LineLoss[0][5, -1]
+    P02vec[ii] = P0
     #%%
     
     
@@ -108,7 +111,7 @@ for ii in range(npts):
     Ainit = np.pi*(D_1/2)**2
     u = mdot/(rhoInit*Ainit)
     dynamicP = 0.5*rhoInit*u**2
-    P0 = InitialPressure + dynamicP #Pascals stagnation pressure
+    #P0 = InitialPressure + dynamicP #Pascals stagnation pressure
     a_o = np.sqrt(gamma*Rspec*T0) #stagnation speed of sound, stagnation properties
     rho_o = P0/(Rspec*T0) #stagnation density
 
@@ -130,7 +133,7 @@ for ii in range(npts):
     #theoretical maximum from purchased orifice
     mdotPurchase = maxMassFlowRate(gamma,rho_o,a_o,Apurchase) # eqn 15.47
     #solve for downstream pressure after orifice, want to equal goal P
-    P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0,mdotPurchase, Apurchase,P2Goal) #eqn 15.44
+    P4 = pressureAfterOrifice(gamma, rho_o, a_o, P0, mdot, Apurchase,P2Goal) #eqn 15.44
     #if the following downstream pressure is observed in experimentation, this is the flow rate 
     mdotExperimental = massFlowRateThruOrifice(gamma,rho_o,a_o,P0,P4,Apurchase) #eqn 15.44
 
@@ -153,7 +156,7 @@ for ii in range(npts):
         print('Total Pressure drop across system', PdropSystem,'(MPa)')
         print('mdot from experimentation from purchased orifice', mdotExperimental, '(kg/s)')
               
-        soln[:,ii] =[P4,PdropLines,PdropOrifice,PdropSystem,d_inchesMin,mdotExperimental,pressureRange[ii]] 
+        soln[:,ii] =[P4, PdropLines, PdropOrifice, PdropSystem, d_inchesMin, mdotExperimental, pressureRange[ii]] 
 
 #%%
 xlabel = 'Upstream Pressure (MPa)'
@@ -161,11 +164,11 @@ xlabel = 'Upstream Pressure (MPa)'
 soln2 = np.ma.masked_equal(soln,0)
 
 #plotting
-fig, axs = plt.subplots(2, 1, constrained_layout=True)
+fig, axs = plt.subplots(3, 1, constrained_layout=True)
 axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[0,:]/1e6,'-',label = 'Pressure after Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[1,:],'-', label = 'Delta P Across Lines')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[2,:],'-', label = 'Delta P Across Orifice')
-axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln2[3,:],'-', label = 'Total Delta P')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[1,:],'-', label = 'Delta P Across Lines')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[2,:],'-', label = 'Delta P Across Orifice')
+axs[0].plot(pDropCalc.psi_to_MPa(soln2[6,:]), soln[3,:],'-', label = 'Total Delta P')
 axs[0].legend()
 axs[0].set_title('Changes in System Pressures with Upstream Pressure')
 axs[0].set_xlabel(xlabel)
@@ -178,39 +181,9 @@ axs[1].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln2[5,:], '-',label = 'Mdot Exper
 axs[1].set_xlabel(xlabel)
 axs[1].set_title('Orifice Properties Against Upstream Pressure')
 axs[1].legend(loc='upper left')
-plt.show()
 
-
-#Explanation of Results
-
-#mdotmax0 is a theoretical maximum flow rate based off a given orifice diameter
-#in this case the inner diameter of a 1/4" steel tube
-
-#dcrit is the diameter required to achieve this theoretical flow rate ofmdotmaxO 
-
-#orificeAmin is the minimum area required to choke the flow based on the
-#the maximum flow rate calculated from the AirLineAnalysis
-
-#Solved orifice diameter (d_inchesMin) is the diameter required to choke the flow
-#at orificeAmin
-
-#P4_real is based from the maximum flow rate allowed in the system from 
-#Airline Analysis and predicts the pressure entering the chamber after an orifice
-#which is d_inchesMin
-
-#mdotExperimental is the theoretical flow rate achieved based on stagnation
-#pressure, static pressure after the orifice (set as ideal) and dPurchase.
-#if that downstream pressure is measured it will produce mdotExperimental mdot
-#in the current case it is the goal pressure (upstream Pressure/1.528), the
-#minimum required to choke the flow across the orifice
-
-
-#mdotPurchase is a theoretical flow rate achieved based off stagnation conditions
-#and given orifice diameter (dPurchase)
-
-#P4 is a calculation to determine the downstream pressure in the theoretical case of 
-#mdotPurchase instead of setting the downstream pressure
-
-
-
+axs[2].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln[4,:],label = "theoretical orifice area")
+axs[2].set_title("Theoretical Orifice size against upstream pressure \n")
+axs[2].set_ylabel("orifice area [in^2]")
+axs[2].set_xlabel(xlabel)
 
