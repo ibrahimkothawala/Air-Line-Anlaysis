@@ -186,4 +186,4 @@ axs[2].plot(pDropCalc.psi_to_MPa(soln2[6,:]),soln[4,:],label = "theoretical orif
 axs[2].set_title("Theoretical Orifice size against upstream pressure \n")
 axs[2].set_ylabel("orifice area [in^2]")
 axs[2].set_xlabel(xlabel)
-
+plt.show()
