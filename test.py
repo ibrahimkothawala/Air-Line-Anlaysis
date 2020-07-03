@@ -95,9 +95,9 @@ axs[1].set_ylabel("mdot ratio")
 axs[1].legend()
 
 #sub-plot of orifice area
-axs[2].plot(P1_range_mPa,soln[:,5],label = "stagnation pressure")
+axs[2].plot(P1_range_mPa,soln[:,5]/1e6,label = "stagnation pressure")
 axs[2].set_title("Stagnation pressure against upstream pressure \n")
-axs[2].set_ylabel("orifice area [m^2]")
+axs[2].set_ylabel("Stagnation Pressure [mPa]")
 axs[2].set_xlabel(xlabel)
 #axs[2].set_aspect(aspectRatio)
 plt.tight_layout()
