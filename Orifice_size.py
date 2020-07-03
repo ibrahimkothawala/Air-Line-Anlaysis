@@ -187,3 +187,6 @@ axs[2].set_title("Theoretical Orifice size against upstream pressure \n")
 axs[2].set_ylabel("orifice area [in^2]")
 axs[2].set_xlabel(xlabel)
 plt.show()
+
+
+# %%
