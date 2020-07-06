@@ -43,5 +43,11 @@ def stagnationDensityRatio(stagnationPressureRatio,gamma):
     return stagnationPressureRatio**(1/gamma)
 
 #inputs: gamma, upstream density, upstream static pressure, throat static pressure
-# throat area, upstream area
-#outputs: the mass flowrate through an 
+# throat area, upstream area, discharge coefficient
+#outputs: the mass flowrate through a venturi meter
+#references: pg 598 eqn 15.33 Gas Dynamics James John
+#additional information: can be used to determine the mass flowrate thru a venturi
+# if the throat pressure, upstream pressure, upstream density are known.
+def venturiMassflow(gamma,rho_ups,pStaticUps,pStatThroat,A_throat,A_ups,c_d):
+    return (A_throat*np.sqrt((2*gamma*rho_ups*pStaticUps)/(gamma-1)*((pStatThroat/pStaticUps)**(2/gamma)-(pStatThroat/pStaticUps)**((gamma+1)/gamma))))/np.sqrt(1-(A_throat/A_ups)**2*(pStatThroat/pStaticUps)**(2/gamma))
+    
