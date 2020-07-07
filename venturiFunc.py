@@ -16,13 +16,13 @@ def PchokeCondition(gamma): #pressure ratio of Pthroat/P_UpstreamStagnation to v
 #outputs: choked mass flow rate through throat area.
 #References: https://en.wikipedia.org/wiki/Choked_flow
 def chokedMassFlow(throatArea,gamma,rho_0,P0,c_d):
-    return 0#c_d*throatArea*np.sqrt((gamma*rho_0*P0*(2/(gamma+1)))**((gamma+1)/(gamma-1))) needs to be rewritten 
+    return c_d*throatArea*np.sqrt(gamma*rho_0*P0*(2/(gamma+1)**((gamma+1)/(gamma-1))))
 
 #inputs: mass flowrate,gamma,upstream stagnation density, upstream stagnation pressure, discharge coefficient
 #outputs: choked area
 #same equation as above did some algebra (note: throat area arbitrarily 1)
 def chokedArea(mdot,gamma,rho_0,P0,c_d):
-    return 0#mdot/(c_d*np.sqrt((gamma*rho_0*P0*(2/(gamma+1)))**((gamma+1)/(gamma-1)))) needs to be rewritten 
+    return mdot/chokedMassFlow(1,gamma,rho_0,P0,c_d)                                            
 
 #inputs: gamma,specific gas constant,absolute temperature
 #outputs: local speed of sound
@@ -64,6 +64,18 @@ def areaToDiam(area):
 def diamToarea(D):
     return D**2/4*np.pi
 
+def mmToIn(mm):
+    return mm/25.4
+
+def inTomm(inches):
+    return inches*25.4
+
+def paToPsi(pa):
+    return pa/6895
+
+def psiToPa(psi):
+    return psi*6895
+
 if __name__ == '__main__':
     import cantera as ct
     import matplotlib.pyplot as plt
@@ -101,17 +113,23 @@ if __name__ == '__main__':
         soln[ii,2] = chokedMassFlow(A_ups/2,gamma,rho,pStaticUps_range[ii],0.95)
 
 #%% Plotting
-    fig, ax1 = plt.subplots(constrained_layout =True)
-
-    ax1.plot(pStaticUps_range,soln[:,0],label = "mass flowrate against upstream pressure")
-    ax1.set_xlabel("upstream pressure [pa]")
-    ax1.set_ylabel("mass flowrate [kg/s]")
-    ax1.legend()
+    fig, ax1 = plt.subplots(2,constrained_layout =True)
+    ax1[0].set_title("Mass flow rate against upstream pressure")
+    ax1[0].plot(pStaticUps_range,soln[:,0],label ="Throat Pressure: "+"{:.3f}".format(Pthroat/1e6)+" [MPa]"+" Throat diameter: "+"{:.3f}".format(1e3*areaToDiam(A_ups/2))+" [mm]")
+    ax1[0].set_xlabel("upstream static pressure [pa]")
+    ax1[0].set_ylabel("mass flowrate [kg/s]")
+    secaxx = ax1[0].secondary_xaxis('top',functions = (paToPsi,psiToPa))
+    secaxx.set_xlabel("upstream static pressure [psi]")
+    ax1[0].legend()
     
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("throat diameter [mm]")
-    ax2.plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "area against upstream stagnation pressure")
-    ax2.legend()
-    plt.legend()
+    ax1[1].set_title("Choked diameter against upstream stagnation pressure for 0.3 [kg/s] mass flowrate ")
+    ax1[1].set_ylabel("throat diameter [mm]")
+    ax1[1].set_xlabel("upstream stagnation pressure [pa]")
+    ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "")
+    secaxy = ax1[1].secondary_yaxis('right',functions = (mmToIn,inTomm))
+    secaxy.set_ylabel("throat diameter [in]")
+    secaxx1 = ax1[1].secondary_xaxis('top',functions = (paToPsi,psiToPa))
+    secaxx1.set_xlabel("upstream stagnation pressure [psi]")
+    #ax1[1].legend()
     plt.show()
 # %%
