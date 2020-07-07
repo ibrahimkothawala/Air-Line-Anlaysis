@@ -131,6 +131,7 @@ if __name__ == '__main__':
     secaxx1 = ax1[1].secondary_xaxis('top',functions = (paToPsi,psiToPa))
     secaxx1.set_xlabel("upstream stagnation pressure [psi]")
     #ax1[1].legend()
+    
     ax1[2].set_title("Mass flow rate against upstream pressure")
     ax1[2].set_ylabel("Mass flow rate [kg/s]")
     ax1[2].set_xlabel("upstream stagnation pressure [Pa]")
