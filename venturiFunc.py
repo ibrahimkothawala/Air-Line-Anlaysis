@@ -15,14 +15,26 @@ def PchokeCondition(gamma): #pressure ratio of Pthroat/P_UpstreamStagnation to v
 #inputs: throat area, gamma, stagnation density, stagnation pressure, discharge coefficient
 #outputs: choked mass flow rate through throat area.
 #References: https://en.wikipedia.org/wiki/Choked_flow
-def chokedMassFlow(throatArea,gamma,rho_0,P0,c_d):
+def chokedMassFlow_wiki(throatArea,gamma,rho_0,P0,c_d):
     return c_d*throatArea*np.sqrt(gamma*rho_0*P0*(2/(gamma+1)**((gamma+1)/(gamma-1))))
+
+#inputs stagnation pressure, throat area, stagnation temperature, specific gas constant, gamma
+#outputs the maximum mass flowrate through that area
+#References: pg 79 Gas Dynamics James John
+def chokedMassFlow_gasDyn(P0,throatArea,T0,Rspec,gamma):
+    return P0*throatArea/np.sqrt(R_spec*T0)*np.sqrt(gamma)*((gamma+1)/2)**((gamma+1)/(-2*(gamma-1)))
 
 #inputs: mass flowrate,gamma,upstream stagnation density, upstream stagnation pressure, discharge coefficient
 #outputs: choked area
-#same equation as above did some algebra (note: throat area arbitrarily 1)
-def chokedArea(mdot,gamma,rho_0,P0,c_d):
-    return mdot/chokedMassFlow(1,gamma,rho_0,P0,c_d)                                            
+#same equation as chokedMassFlow_wiki did some algebra (note: throat area arbitrarily 1)
+def chokedArea_wiki(mdot,gamma,rho_0,P0,c_d):
+    return mdot/chokedMassFlow_wiki(1,gamma,rho_0,P0,c_d)                                           
+
+#inputs: mass flowrate, stagnation pressure, stagnation temperature, specific gas constant, gamma
+#outputs: choked area
+#same equation as chokedMassFlow_gasDyn did some algebra (note: throat area arbitrarily 1)
+def chokedArea_gasDyn(mdot,P0,T0,Rspec, gamma):
+    return mdot/chokedMassFlow_gasDyn(P0,1,T0,Rspec,gamma)
 
 #inputs: gamma,specific gas constant,absolute temperature
 #outputs: local speed of sound
@@ -103,14 +115,17 @@ if __name__ == '__main__':
     pStaticUps_range = np.linspace(2e6,10e6,pts) # range of upstream pressures to test
     Pthroat = 2e6 # single downstream pressure [Pa]
     mdot = 0.3 # goal mass flow rate [kg/s]
-    soln = np.zeros((pts,3))
+    soln = np.zeros((pts,5))
 
     for ii in range(pts):
         gas.TP = T0, pStaticUps_range[ii]
         rho = gas.density_mass
-        soln[ii,0] = venturiMassflow(gamma,rho,pStaticUps_range[ii],Pthroat,A_ups/2,A_ups,0.95)
-        soln[ii,1] = chokedArea(mdot,gamma,rho,pStaticUps_range[ii],0.95)
-        soln[ii,2] = chokedMassFlow(A_ups/2,gamma,rho,pStaticUps_range[ii],0.95)
+        gamma = gas.cp/gas.cv
+        soln[ii,0] = venturiMassflow(gamma,rho,pStaticUps_range[ii],Pthroat,A_ups/2,A_ups,1)
+        soln[ii,1] = chokedArea_wiki(mdot,gamma,rho,pStaticUps_range[ii],1)
+        soln[ii,2] = chokedMassFlow_wiki(A_ups/2,gamma,rho,pStaticUps_range[ii],1)
+        soln[ii,3] = chokedMassFlow_gasDyn(pStaticUps_range[ii],A_ups/2,T0,R_spec,gamma)
+        soln[ii,4] = chokedArea_gasDyn(mdot,pStaticUps_range[ii],T0,R_spec,gamma)
 
 #%% Plotting
     fig, ax1 = plt.subplots(3,constrained_layout =True)
@@ -125,19 +140,21 @@ if __name__ == '__main__':
     ax1[1].set_title("Choked diameter against upstream stagnation pressure for "+"{:.2f}".format(mdot)+" [kg/s] mass flowrate")
     ax1[1].set_ylabel("throat diameter [mm]")
     ax1[1].set_xlabel("upstream stagnation pressure [Pa]")
-    ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "")
+    ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "(wiki func)")
+    ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,4])*1e3,label = "(gas dyn func)")
     secaxy = ax1[1].secondary_yaxis('right',functions = (mmToIn,inTomm))
     secaxy.set_ylabel("throat diameter [in]")
     secaxx1 = ax1[1].secondary_xaxis('top',functions = (paToPsi,psiToPa))
     secaxx1.set_xlabel("upstream stagnation pressure [psi]")
-    #ax1[1].legend()
+    ax1[1].legend()
     
     ax1[2].set_title("Mass flow rate against upstream pressure")
     ax1[2].set_ylabel("Mass flow rate [kg/s]")
     ax1[2].set_xlabel("upstream stagnation pressure [Pa]")
-    ax1[2].plot(pStaticUps_range,soln[:,2],label = " Throat diameter: "+"{:.3f}".format(1e3*areaToDiam(A_ups/2))+" [mm]")
+    ax1[2].plot(pStaticUps_range,soln[:,2],label = "(Wiki func) Throat diameter: "+"{:.3f}".format(1e3*areaToDiam(A_ups/2))+" [mm]")
+    ax1[2].plot(pStaticUps_range,soln[:,3],label = "(Gas Dyn func) Throat diameter: "+"{:.3f}".format(1e3*areaToDiam(A_ups/2))+" [mm]")
     ax1[2].legend()
     secaxx2 = ax1[2].secondary_xaxis('top',functions = (paToPsi,psiToPa))
-    secaxx.set_xlabel("upstream stagnation pressure [psi]")
+    secaxx2.set_xlabel("upstream stagnation pressure [psi]")
     plt.show()
 # %%
