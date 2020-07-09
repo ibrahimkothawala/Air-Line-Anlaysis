@@ -71,10 +71,10 @@ def venturiMassflow(gamma,rho_ups,pStaticUps,pStatThroat,A_throat,A_ups,c_d):
     return (c_d*A_throat*np.sqrt((2*gamma*rho_ups*pStaticUps)/(gamma-1)*((pStatThroat/pStaticUps)**(2/gamma)-(pStatThroat/pStaticUps)**((gamma+1)/gamma))))     \
     /np.sqrt(1-(A_throat/A_ups)**2*(pStatThroat/pStaticUps)**(2/gamma))
 
-#inputs: initial mach number guess, reference area, actual area, gamma
+#inputs: initial mach number guess,area ratio of a star to a actual(aActual/Astar), gamma
 #outputs: mach number at the area specified
 #references: pg 79 eqn 3.23 and pg 80 for derivative function Gas dynamics james john 
-#note: since two solutiosn for isentropic flow through a variable area channel one supersonic one subsonic if initial
+#note: since two solutions for isentropic flow through a variable area channel one supersonic one subsonic if initial
 # guess is subsonic will return subsonic root if initial guess is supersonic will return supersonic root.
 def machAreaRatio(machGuess,areaRatio,gamma):
     def f(mach):
@@ -83,6 +83,42 @@ def machAreaRatio(machGuess,areaRatio,gamma):
         b = (gamma+1)/2/(gamma-1); c = 2/(gamma+1)
         return areaRatio - c**(b-1)*mach*(1+mach**2/2/b/c)**(b-1)
     return fsolve(f,machGuess,fprime=fprime)
+
+#inputs: area of throat, exit area, shock area guess, gamma, upstream stagnation pressure
+#outputs: ratio of upstream stagnation pressure to exit pressure for a shock that occurs at that area (Pb/P01)
+#references: pg 137 Gas Dynamics James John
+#note this is used in other functions not useful by itself
+def normalShockCalc(throatArea,exitArea,shockAreaGuess, gamma, P0):
+    mach1 = machAreaRatio(5,shockAreaGuess/throatArea,gamma)
+    P0ratioShock = stagPratioAcrossNormShock(mach1,gamma) #note this is equivalent to p_02/p_01 and a2Star/a1Star 
+    AexitA2starRatio = exitArea/throatArea/P0ratioShock
+    machExit = machAreaRatio(0.4,AexitA2starRatio,gamma)
+    PbP02Ratio = 1/stagnationPressureRatio(gamma,machExit) #p_staticExit/p02
+    return PbP02Ratio*P0ratioShock
+
+#inputs: area of throat, exit area, gamma, upstream stagnation pressure, exit static pressure
+#outputs: if normal shock occurs: location of normal shock
+# if normal shock doesn't occur: returns 0 and prints message normal shock doesn't occur within diverging section
+# if flow is not choked: message returns 0 and prints flow is not choked
+def normalShockLoop(throatArea,exitArea,gamma, P0, Pb):
+    chokedCondition = 1 #needs actual value
+    if Pb/P0 < chokedCondition: 
+        print("flow is not choked")
+        return 0
+    else:
+        PbP01ratioCalcExit = normalShockCalc(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
+        if PbP01ratioCalcExit < Pb/P0:
+            print("normal shock does not occur in diverging section")
+            return 0
+        else:
+            shockArea = np.average([throatArea,exitArea])
+            PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
+            ctr = 0; ctrMax = 100; tol = 1e-3
+            while ctr < ctrMax and np.abs(PbP01ratioCalcLoop - Pb/P0) > tol:
+                shockArea = ((PbP01ratioCalcLoop)/(Pb/P0) -1)*shockArea
+                PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
+            return shockArea
+
 
 #inputs: mach number before shock, gamma
 #outputs: ratio of stagnation pressures before and after shock p_o2/p_o1
