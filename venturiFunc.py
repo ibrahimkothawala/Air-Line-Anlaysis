@@ -1,6 +1,7 @@
 #author: Ibrahim Kothawala 
 
 import numpy as np
+from scipy.optimize import fsolve
 
 #Gas Constant
 R = 8.31446261815324 #j/K/mol
@@ -70,6 +71,19 @@ def venturiMassflow(gamma,rho_ups,pStaticUps,pStatThroat,A_throat,A_ups,c_d):
     return (c_d*A_throat*np.sqrt((2*gamma*rho_ups*pStaticUps)/(gamma-1)*((pStatThroat/pStaticUps)**(2/gamma)-(pStatThroat/pStaticUps)**((gamma+1)/gamma))))     \
     /np.sqrt(1-(A_throat/A_ups)**2*(pStatThroat/pStaticUps)**(2/gamma))
 
+#inputs: initial mach number guess, reference area, actual area, gamma
+#outputs: mach number at the area specified
+#references: pg 79 eqn 3.23 and pg 80 Gas dynamics james john for derivative function
+#note: since two solutiosn for isentropic flow through a variable area channel one supersonic one subsonic if initial
+# guess is subsonic will return subsonic root if initial guess is supersonic will return supersonic root.
+def machAreaRatio(machGuess,areaRatio,gamma):
+    def f(mach):
+        return 1/mach*((2/(gamma+1))*(1+mach**2/2*(gamma-1)))**((gamma+1)/2/(gamma-1))-areaRatio
+    def fprime(mach):
+        b = (gamma+1)/2/(gamma-1); c = 2/(gamma+1)
+        return areaRatio - c**(b-1)*mach*(1+mach**2/2/b/c)**(b-1)
+    return fsolve(f,machGuess,fprime=fprime)
+
 def areaToDiam(area):
     return np.sqrt(4*area/np.pi)
 
@@ -127,6 +141,17 @@ if __name__ == '__main__':
         soln[ii,3] = chokedMassFlow_gasDyn(pStaticUps_range[ii],A_ups/2,T0,R_spec,gamma)
         soln[ii,4] = chokedArea_gasDyn(mdot,pStaticUps_range[ii],T0,R_spec,gamma)
 
+#%% Testing machAreaRatio function
+    ptsMach = 100
+    gamma = 1.4
+    areaRatioRange = np.linspace(1,10,ptsMach)
+    solnMach = np.zeros(ptsMach*2)
+    subSonicGuess = 0.4; supSonicGuess = 5
+    for ii in range(ptsMach):
+            solnMach[ii] = machAreaRatio(subSonicGuess,areaRatioRange[ii],gamma)
+            solnMach[ii+ptsMach] = machAreaRatio(supSonicGuess,areaRatioRange[ii],gamma)
+
+
 #%% Plotting
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
@@ -156,5 +181,14 @@ if __name__ == '__main__':
     ax1[2].legend()
     secaxx2 = ax1[2].secondary_xaxis('top',functions = (paToPsi,psiToPa))
     secaxx2.set_xlabel("upstream stagnation pressure [psi]")
+    plt.show()
+
+#%% Plotting Mach number tests
+    plt.figure(2)
+    plt.title("Area Ratio against Mach Number")
+    plt.ylabel("Area Ratio")
+    plt.xlabel("Mach Number")
+    plt.plot(solnMach[0:ptsMach],areaRatioRange,color = "blue")
+    plt.plot(solnMach[ptsMach:2*ptsMach],areaRatioRange,color = "blue")
     plt.show()
 # %%
