@@ -73,7 +73,7 @@ def venturiMassflow(gamma,rho_ups,pStaticUps,pStatThroat,A_throat,A_ups,c_d):
 
 #inputs: initial mach number guess, reference area, actual area, gamma
 #outputs: mach number at the area specified
-#references: pg 79 eqn 3.23 and pg 80 Gas dynamics james john for derivative function
+#references: pg 79 eqn 3.23 and pg 80 for derivative function Gas dynamics james john 
 #note: since two solutiosn for isentropic flow through a variable area channel one supersonic one subsonic if initial
 # guess is subsonic will return subsonic root if initial guess is supersonic will return supersonic root.
 def machAreaRatio(machGuess,areaRatio,gamma):
@@ -83,6 +83,12 @@ def machAreaRatio(machGuess,areaRatio,gamma):
         b = (gamma+1)/2/(gamma-1); c = 2/(gamma+1)
         return areaRatio - c**(b-1)*mach*(1+mach**2/2/b/c)**(b-1)
     return fsolve(f,machGuess,fprime=fprime)
+
+#inputs: mach number before shock, gamma
+#outputs: ratio of stagnation pressures before and after shock p_o2/p_o1
+#refernces: pg 119 eqn 4.15 Gas Dynamics james john 
+def stagPratioAcrossNormShock(mach1, gamma):
+    return ((mach1**2*(gamma+1)/2)/(1 + mach1**2*(gamma-1)/2))**(gamma/(gamma-1))*(1/(1 + mach1**2*(gamma-1)/2))**(1/(gamma-1))
 
 def areaToDiam(area):
     return np.sqrt(4*area/np.pi)
