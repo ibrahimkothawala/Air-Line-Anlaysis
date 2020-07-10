@@ -23,7 +23,7 @@ def chokedMassFlow_wiki(throatArea,gamma,rho_0,P0,c_d):
 #outputs the maximum mass flowrate through that area
 #References: pg 79 Gas Dynamics James John
 def chokedMassFlow_gasDyn(P0,throatArea,T0,Rspec,gamma):
-    return P0*throatArea/np.sqrt(R_spec*T0)*np.sqrt(gamma)*((gamma+1)/2)**((gamma+1)/(-2*(gamma-1)))
+    return P0*throatArea/np.sqrt(Rspec*T0)*np.sqrt(gamma)*((gamma+1)/2)**((gamma+1)/(-2*(gamma-1)))
 
 #inputs: mass flowrate,gamma,upstream stagnation density, upstream stagnation pressure, discharge coefficient
 #outputs: choked area
@@ -40,8 +40,8 @@ def chokedArea_gasDyn(mdot,P0,T0,Rspec, gamma):
 #inputs: gamma,specific gas constant,absolute temperature
 #outputs: local speed of sound
 #References: https://en.wikipedia.org/wiki/Speed_of_sound
-def speedOfSound(gamma,R_spec,T):
-    return np.sqrt(gamma*R_spec*T)
+def speedOfSound(gamma,Rspec,T):
+    return np.sqrt(gamma*Rspec*T)
 
 #inputs: velocity, local speed of sound
 #outputs: local mach number
