@@ -89,30 +89,31 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
     
     
     if plots:
-     
-     xlabel = 'Length of tube [m]'
-     fig, axs = plt.subplots(4, 1, constrained_layout=True)
-     axs[0].plot(Lvector, fullArrayFlowData[4,:],'-')
-     axs[0].set_title('Mach Number Along Tube')
-     axs[0].set_xlabel(xlabel)
-     axs[0].set_ylabel('Mach Number')
-     fig.suptitle('Fanno Flow Results', fontsize=12)
-    
-     axs[1].plot(Lvector,fullArrayFlowData[6,:], '-')
-     axs[1].set_xlabel(xlabel)
-     axs[1].set_title('Friction Factor Along Tube')
-     axs[1].set_ylabel('Friction Factor')
-    
-     axs[2].plot(Lvector,fullArrayFlowData[1,:]/1e6, '-')
-     axs[2].set_xlabel(xlabel)
-     axs[2].set_title('Pressure Along Tube')
-     axs[2].set_ylabel('P [mPa]')
+        
+        xlabel = 'Length of tube [m]'
+        fig, axs = plt.subplots(4, 1, constrained_layout=True)
+        axs[0].plot(Lvector, fullArrayFlowData[4,:],'-')
+        axs[0].set_title('Mach Number Along Tube')
+        axs[0].set_xlabel(xlabel)
+        axs[0].set_ylabel('Mach Number')
+        fig.suptitle('Fanno Flow Results', fontsize=12)
+        
+        axs[1].plot(Lvector,fullArrayFlowData[6,:], '-')
+        axs[1].set_xlabel(xlabel)
+        axs[1].set_title('Friction Factor Along Tube')
+        axs[1].set_ylabel('Friction Factor')
+        
+        axs[2].plot(Lvector,fullArrayFlowData[1,:]/1e6, '-')
+        axs[2].set_xlabel(xlabel)
+        axs[2].set_title('Pressure Along Tube')
+        axs[2].set_ylabel('P [mPa]')
 
-     axs[3].plot(Lvector,fullArrayFlowData[0,:], '-')
-     axs[3].set_xlabel(xlabel)
-     axs[3].set_title('Temperature Along Tube')
-     axs[3].set_ylabel('T [K]')
-     plt.show()
+        axs[3].plot(Lvector,fullArrayFlowData[0,:], '-')
+        axs[3].set_xlabel(xlabel)
+        axs[3].set_title('Temperature Along Tube')
+        axs[3].set_ylabel('T [K]')
+        plt.show()
+    
     return soln,fullArrayFlowData, PdropTotal/1e6
 #%%
 if __name__ == '__main__':
