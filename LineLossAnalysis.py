@@ -92,7 +92,7 @@ def LineAnalysis(mdot, T0,P1,gas,gamma, step,pipeSysProp,intermediateOutputs=Fal
         
         xlabel = 'Length of tube [m]'
         fig, axs = plt.subplots(4, 1, constrained_layout=True)
-        axs[0].plot(Lvector, fullArrayFlowData[4,:],'-')
+        axs[0].plot(Lvector, fullArrayFlowData[4,:],'-',label = "M1")
         axs[0].set_title('Mach Number Along Tube')
         axs[0].set_xlabel(xlabel)
         axs[0].set_ylabel('Mach Number')
