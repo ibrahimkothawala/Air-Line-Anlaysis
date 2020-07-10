@@ -2,7 +2,7 @@
 
 import numpy as np
 from scipy.optimize import fsolve
-
+#%% Functions and Global Constants
 #Gas Constant
 R = 8.31446261815324 #j/K/mol
 
@@ -84,47 +84,52 @@ def machAreaRatio(machGuess,areaRatio,gamma):
         return areaRatio - c**(b-1)*mach*(1+mach**2/2/b/c)**(b-1)
     return fsolve(f,machGuess,fprime=fprime)
 
+#inputs: mach number before shock, gamma
+#outputs: ratio of stagnation pressures before and after shock p_o2/p_o1
+#refernces: pg 119 eqn 4.15 Gas Dynamics james john 
+def stagPratioAcrossNormShock(mach1, gamma):
+    return (((gamma+1)/2*mach1**2)/(1+(gamma-1)/2*mach1**2))**(gamma/(gamma-1))*(1/(2*gamma*mach1**2/(gamma+1)-(gamma-1)/(gamma+1)))**(1/(gamma-1))
+
 #inputs: area of throat, exit area, shock area guess, gamma, upstream stagnation pressure
 #outputs: ratio of upstream stagnation pressure to exit pressure for a shock that occurs at that area (Pb/P01)
 #references: pg 137 Gas Dynamics James John
 #note this is used in other functions not useful by itself
-def normalShockCalc(throatArea,exitArea,shockAreaGuess, gamma, P0):
-    mach1 = machAreaRatio(5,shockAreaGuess/throatArea,gamma)
-    P0ratioShock = stagPratioAcrossNormShock(mach1,gamma) #note this is equivalent to p_02/p_01 and a2Star/a1Star 
-    AexitA2starRatio = exitArea/throatArea/P0ratioShock
+# currently does not work
+def BackPressureAfterNormalShock(throatArea,exitArea,shockArea, gamma, P0):
+    mach1 = machAreaRatio(5,shockArea/throatArea,gamma) #calculates the mach number right before shock
+    P0ratioShock = stagPratioAcrossNormShock(mach1,gamma) #note this is equivalent to p_02/p_01 = A*_1/A*_2 eqn 4.21 Gas Dynamamics 
+    AexitA2starRatio = exitArea*P0ratioShock/exitArea #
     machExit = machAreaRatio(0.4,AexitA2starRatio,gamma)
     PbP02Ratio = 1/stagnationPressureRatio(gamma,machExit) #p_staticExit/p02
-    return PbP02Ratio*P0ratioShock
+    return PbP02Ratio*P0ratioShock*P0
 
 #inputs: area of throat, exit area, gamma, upstream stagnation pressure, exit static pressure
 #outputs: if normal shock occurs: location of normal shock
 # if normal shock doesn't occur: returns 0 and prints message normal shock doesn't occur within diverging section
 # if flow is not choked: message returns 0 and prints flow is not choked
+# currently does not work 
 def normalShockLoop(throatArea,exitArea,gamma, P0, Pb):
-    chokedCondition = 1 #needs actual value
-    if Pb/P0 < chokedCondition: 
-        print("flow is not choked")
-        return 0
-    else:
-        PbP01ratioCalcExit = normalShockCalc(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
-        if PbP01ratioCalcExit < Pb/P0:
-            print("normal shock does not occur in diverging section")
-            return 0
-        else:
-            shockArea = np.average([throatArea,exitArea])
-            PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
-            ctr = 0; ctrMax = 100; tol = 1e-3
-            while ctr < ctrMax and np.abs(PbP01ratioCalcLoop - Pb/P0) > tol:
-                shockArea = ((PbP01ratioCalcLoop)/(Pb/P0) -1)*shockArea
-                PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
-            return shockArea
-
-
-#inputs: mach number before shock, gamma
-#outputs: ratio of stagnation pressures before and after shock p_o2/p_o1
-#refernces: pg 119 eqn 4.15 Gas Dynamics james john 
-def stagPratioAcrossNormShock(mach1, gamma):
-    return ((mach1**2*(gamma+1)/2)/(1 + mach1**2*(gamma-1)/2))**(gamma/(gamma-1))*(1/(1 + mach1**2*(gamma-1)/2))**(1/(gamma-1))
+    # chokedCondition = 1/PchokeCondition(gamma)
+    # if P0/Pb < chokedCondition: 
+    #     print("flow is not choked")
+    #     return 0
+    # else:
+    #     PbP01ratioCalcExit = normalShockCalc(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
+    #     if PbP01ratioCalcExit < Pb/P0:
+    #         print("normal shock does not occur in diverging section")
+    #         return 0
+    #     else:
+    #         shockArea = np.average([throatArea,exitArea])
+    #         PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
+    #         ctr = 0; ctrMax = 100; tol = 1
+    #         while ctr < ctrMax and np.abs(PbP01ratioCalcLoop - Pb/P0) > tol:
+    #             shockArea = ((PbP01ratioCalcLoop)/(Pb/P0) -1)*shockArea
+    #             PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
+    #             ctr+=1
+    #         if ctr == ctrMax:
+    #             print("convergence failed")
+    #         return shockArea
+    return 0 
 
 def areaToDiam(area):
     return np.sqrt(4*area/np.pi)
@@ -192,8 +197,20 @@ if __name__ == '__main__':
     for ii in range(ptsMach):
             solnMach[ii] = machAreaRatio(subSonicGuess,areaRatioRange[ii],gamma)
             solnMach[ii+ptsMach] = machAreaRatio(supSonicGuess,areaRatioRange[ii],gamma)
+     
 
+#%% Testing Normal Shock Functions
+    ptsShock = 100
+    gamma = 1.4
+    exitArea = diamToarea(1e-3*inTomm(0.5))
+    solnShock = np.zeros((ptsShock,2))
+    P0_range = np.linspace(2e6,10e6,ptsShock)
 
+    for ii in range(ptsShock):
+        throatArea = chokedArea_gasDyn(mdot,P0_range[ii],T0,R_spec,gamma)
+        solnShock[ii,0] = BackPressureAfterNormalShock(throatArea,exitArea,throatArea,gamma,P0_range[ii])
+        solnShock[ii,1] = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0_range[ii])
+   
 #%% Plotting
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
@@ -232,5 +249,15 @@ if __name__ == '__main__':
     plt.xlabel("Mach Number")
     plt.plot(solnMach[0:ptsMach],areaRatioRange,color = "blue")
     plt.plot(solnMach[ptsMach:2*ptsMach],areaRatioRange,color = "blue")
+    plt.show()
+
+#%% Plotting Normal Shock Area tests
+    plt.figure(3)
+    plt.title("Back pressure required normal shock at throat or exit")
+    plt.ylabel("Back Pressure [Pa]")
+    plt.xlabel("Upstream stagnation pressure [Pa]")
+    plt.plot(P0_range,solnShock[:,0], label = "Back Pressure for Normal Shock at Throat")
+    plt.plot(P0_range,solnShock[:,1], label = "Back Pressure for Normal Shock at Exit")
+    plt.legend()
     plt.show()
 # %%
