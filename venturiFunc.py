@@ -20,6 +20,13 @@ def axiVerticesString(vertices):
         string.append('\n')
     return ''.join(string)
 
+#inputs: array, value
+#outputs: index at which the closest value occurs
+#reference: https://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array/2566508
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
 
 #converts degreees to radians
 def degreesToRad(degrees):
@@ -220,7 +227,6 @@ def normalShockNewtonRaphson(throatArea,exitArea,gamma,P0,Pb):
         return 0
     else:
         PbShockatExit = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
-        print(PbShockatExit)
         if PbShockatExit > Pb:
             print("normal shock does not occur in diverging section")
             return 0
@@ -381,25 +387,73 @@ if __name__ == '__main__':
 
     vertices = convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5)
     interpVertices = interpolatedVertices(vertices,pts)
+    verticesNoZeros = removeRadialZeros(vertices)
     print(axiVerticesString(vertices*1e3))
+    data = np.zeros((pts,4))
+    data[:,[0,1]] = interpVertices
 
     for ii in range(pts):
+        if data[ii,1] < verticesNoZeros[2,2]:
+            data[ii,2] = 0.5
+            data[ii,3] = throatArea
+        elif data[ii,1] < verticesNoZeros[2,3]:
+            data[ii,2] = 0.5
+            data[ii,2] = throatArea
 
-        if ii == 0:
-            MachGuess = 0.5
-            shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet),gamma,P0,Pb)
-            if shockArea != 0:
+
+    #loop does not work
+    # for ii in range(pts):
+
+    #     if ii == 0:
+    #         MachGuess = 0.5
+    #         areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+    #         solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+    #         ctr = 0
+    #         ctr2 = 0 
+
+    #     elif interpVertices[ii-1,0] == interpVertices[ii,0]:
+    #         soln[ii] = soln[ii-1]
+
+    #     elif interpVertices[ii-1,0] > interpVertices[ii,0]:    
+    #         MachGuess = 0.5
+    #         areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+    #         solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+
+    #     elif interpVertices[ii-1,0] < interpVertices[ii,0]:
+    #         if ctr == 0:
+    #             shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
+    #             ctr+=1
+          
+    #         if shockArea != 0:
+    #             rShock = areaToDiam(shockArea)/2
+    #             if ctr2 == 0:
+    #                 jj = ii
+    #                 closestIdxToNormShock = find_nearest(interpVertices[jj:-1,0],rShock)
+    #                 closestIdxToNormShock += jj
                 
-                zShock = 0
-        elif interpVertices[ii-1,0] == interpVertices[ii,0]:
-            soln[ii] = soln[ii-1]
-        elif interpVertices[ii-1,0] > interpVertices[ii,0]:
-            MachGuess = 0.5
-        else:
-            MachGuess = 5
+    #             if ii < closestIdxToNormShock:
+    #                 MachGuess = 5
+    #                 areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+    #                 solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+                
+    #             elif ii == closestIdxToNormShock:
+    #                 MachGuess = 5
+    #                 areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+    #                 solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+    #                 stagRatio = stagPratioAcrossNormShock(solnVenturi[ii],gamma)
+    #                 Astar2 = diamToarea(rThroat*2)/stagRatio
+                
+    #             elif ii > closestIdxToNormShock:
+    #                 MachGuess = 0.5
+    #                 areaRatio = diamToarea(interpVertices[ii,0]*2)/Astar2
+    #                 solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+            
+    #         else:
+    #             MachGuess = 5
+    #             areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+    #             solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
 
-        areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-        solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+      
 
 
 
