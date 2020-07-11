@@ -25,8 +25,8 @@ mdot = 0.3 #mass flow rate [kg/s]
 T0 = 300# #ambient temperature [K]/stagnation
 P2Goal = 300 #[PSI] #goal Pressure (chamber pressure)
 step = 0.001 #(m) #step size for line loss analysis
-npts = 30 #number of pressure points for analysis
-pressureRange = np.linspace(300,2500,npts)
+npts = 100 #number of pressure points for analysis
+pressureRange = np.linspace(1200,2500,npts)
 soln = np.zeros((7,npts))
 
 Kvec = [0.75, 0.00001006424457,0.2,1.816115216,7.5, 0.5, 3.30000078] #valve and fitting coefficients
@@ -181,14 +181,17 @@ for ii in range(npts):
         soln2 = np.ma.masked_equal(soln,0)
 #%% Plotting Venturi
 if venturi:
+    estimatedBackPressure = 1.2*2e6
     solnVenturi = np.ma.masked_equal(solnVenturi,0)
     plt.figure(1)
     plt.title("Static Upstream Pressure Against Downstream Stagnation Pressure")
-    plt.ylabel("Downstream Stagnation Pressure")
+    plt.ylabel("Downstream Pressure")
     plt.xlabel("Upstream Static Pressure")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,1],label = "Downstream Stagnation Pressure")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,3],label = "Downstream back pressure for normal shock at exit")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,4],label = "Downstream back pressure for normal shock at throat")
+    plt.plot(solnVenturi[:,0],solnVenturi[:,1],label = "Stagnation Pressure at Pipe System Outlet")
+    plt.plot(solnVenturi[:,0],solnVenturi[:,3],label = "Downstream back pressure for normal shock at venturi exit")
+    plt.plot(solnVenturi[:,0],solnVenturi[:,4],label = "Downstream back pressure for normal shock at venturi throat")
+    plt.plot(solnVenturi[:,0],estimatedBackPressure*np.ones(len(solnVenturi[:,0])),'-.',label = "Estimated back pressure")
+    plt.legend()
     
 #%% Plotting Orifice
 

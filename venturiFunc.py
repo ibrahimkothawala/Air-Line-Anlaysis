@@ -6,6 +6,84 @@ from scipy.optimize import fsolve
 #Gas Constant
 R = 8.31446261815324 #j/K/mol
 
+#converts (x,y,z) points to a string that can be pasted into blockMeshDict
+def axiVerticesString(vertices):
+    string = []
+    for ii in range(len(vertices[:,])):
+        string.append('(')
+        for kk in range(len(vertices[0,:])):
+            string.append(str(vertices[ii,kk]))
+            string.append(' ')
+        string.append(')')
+        string.append(' //point ')
+        string.append(str(ii))
+        string.append('\n')
+    return ''.join(string)
+
+
+#converts degreees to radians
+def degreesToRad(degrees):
+    return degrees*np.pi/180
+
+#Calculates the x and y points for a wedge of radius r and wedge angle of alpha
+def axiXYpnt(r,alpha):
+    return r*np.cos(degreesToRad(alpha/2)), r*np.sin(degreesToRad(alpha/2))
+
+
+#Calculates the axial distance between 2 conic sections: 1st at the throat radius and 2nd at the outer radius
+def axiConeLength(rThroat,rOuter,coneAngle):
+    return (rOuter-rThroat)/np.tan(degreesToRad(coneAngle))
+
+#puts the points of a 6 point wedge into an array
+def axiVertices(xy_0,xy_1,axDist):
+    
+    x_0 = xy_0[0]
+    y_0 = xy_0[1]
+    x_1 = xy_1[0]
+    y_1 = xy_1[1]
+    pt0 = 0,0,0
+    pt1 = x_0,y_0,0
+    pt2 = x_1,y_1,axDist
+    pt3 = 0,0,axDist
+    pt4 = x_0,y_0*-1,0
+    pt5 = x_1,y_1*-1,axDist   
+    output = pt0,pt1,pt2,pt3,pt4,pt5
+    return np.array(output)
+
+#Calculates the (x,y,z) points used to make up a cylindrical wedge 
+def axiVerticesCyl(r,z,alpha):
+    xy = axiXYpnt(r,alpha)
+    return axiVertices(xy,xy,z)
+
+
+#Creates the points that make up a converging-diverging section
+def convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,convConeAngle,divConeAngle,alpha):
+    vertices = axiVerticesCyl(rInlet,zInlet,alpha)
+    z = zInlet+axiConeLength(rThroat,rInlet,convConeAngle)
+    pt6 = 0,0,z
+    xy = axiXYpnt(rThroat,alpha)
+    pt7 = xy[0],xy[1]*-1,z
+    pt8 = xy[0],xy[1],z
+    vertices = np.append(vertices,[pt6,pt7,pt8],axis=0) #appending converging section
+    z += zInlet
+    pt6 = 0,0,z
+    pt7 = xy[0],xy[1]*-1,z
+    pt8 = xy[0],xy[1],z
+    vertices = np.append(vertices,[pt6,pt7,pt8],axis=0) #appending throat section
+    z += axiConeLength(rThroat,rOutlet,divConeAngle)
+    xy = axiXYpnt(rOutlet,alpha)
+    pt6 = 0,0,z
+    pt7 = xy[0],xy[1]*-1,z
+    pt8 = xy[0],xy[1],z
+    vertices = np.append(vertices,[pt6,pt7,pt8],axis=0) #appending diverging section
+    z += zOutlet
+    pt6 = 0,0,z
+    pt7 = xy[0],xy[1]*-1,z
+    pt8 = xy[0],xy[1],z
+    vertices = np.append(vertices,[pt6,pt7,pt8],axis=0) #appending outlet section
+    
+    return vertices
+
 #inputs: gamma
 #outputs: Pstar/P0
 #References: https://en.wikipedia.org/wiki/Choked_flow
@@ -114,22 +192,67 @@ def normalShockLoop(throatArea,exitArea,gamma, P0, Pb):
     #     print("flow is not choked")
     #     return 0
     # else:
-    #     PbP01ratioCalcExit = normalShockCalc(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
-    #     if PbP01ratioCalcExit < Pb/P0:
+    #     PbShockatExit = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
+    #     print(PbShockatExit)
+    #     if PbShockatExit > Pb:
     #         print("normal shock does not occur in diverging section")
     #         return 0
     #     else:
     #         shockArea = np.average([throatArea,exitArea])
-    #         PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
-    #         ctr = 0; ctrMax = 100; tol = 1
-    #         while ctr < ctrMax and np.abs(PbP01ratioCalcLoop - Pb/P0) > tol:
-    #             shockArea = ((PbP01ratioCalcLoop)/(Pb/P0) -1)*shockArea
-    #             PbP01ratioCalcLoop = normalShockCalc(throatArea,exitArea,shockArea,gamma,P0)
+    #         PbCalc = BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0)
+    #         ctr = 0; ctrMax = 100; tol = 10
+    #         while ctr < ctrMax and np.abs(PbCalc - Pb) > tol:
+    #             shockArea = (Pb)/(Pb -1)*shockArea
+    #             PbCalc = BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0)
     #             ctr+=1
     #         if ctr == ctrMax:
     #             print("convergence failed")
-    #         return shockArea
-    return 0 
+            return 0 #shockArea
+
+#inputs: area of throat, exit area, gamma, upstream stagnation pressure, exit static pressure
+#outputs: if normal shock occurs: location of normal shock
+# if normal shock doesn't occur: returns 0 and prints message normal shock doesn't occur within diverging section
+# if flow is not choked: message returns 0 and prints flow is not choked
+def normalShockNewtonRaphson(throatArea,exitArea,gamma,P0,Pb):
+    chokedCondition = 1/PchokeCondition(gamma)
+    if P0/Pb < chokedCondition: 
+        print("flow is not choked")
+        return 0
+    else:
+        PbShockatExit = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
+        print(PbShockatExit)
+        if PbShockatExit > Pb:
+            print("normal shock does not occur in diverging section")
+            return 0
+        else:
+            def f(shockArea):
+                return BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0) - Pb
+            shockAreaGuess = np.average([throatArea,exitArea])
+            shockArea = fsolve(f,shockAreaGuess)
+            return shockArea
+
+#inputs: vertices generated from blockMesh function (used in openfoam)
+#outputs: same vertices but with radial zeros removed as this messes with interpolation function
+def removeRadialZeros(vertices):
+    arr = np.copy(vertices)
+    rowsDeleted = []
+    for ii in range(len(vertices[:,0])):
+        if vertices[ii,0] == 0:
+            rowsDeleted.append(ii)
+    return np.delete(arr,rowsDeleted,0)
+
+#inputs: vertices generated with convDiv function, and number of points over which to interpolate
+#outputs: interpolated r and z coordinates in that order (r,z)
+def interpolatedVertices(vertices,pts):
+    arr = removeRadialZeros(vertices)
+    rzInterp = np.zeros((pts,2))
+    rzInterp[:,1] = np.linspace(0,arr[-1,2],pts)
+    rzInterp[:,0] = np.interp(rzInterp[:,1],arr[:,2],arr[:,0])
+    return rzInterp
+
+
+
+
 
 def areaToDiam(area):
     return np.sqrt(4*area/np.pi)
@@ -210,7 +333,80 @@ if __name__ == '__main__':
         throatArea = chokedArea_gasDyn(mdot,P0_range[ii],T0,R_spec,gamma)
         solnShock[ii,0] = BackPressureAfterNormalShock(throatArea,exitArea,throatArea,gamma,P0_range[ii])
         solnShock[ii,1] = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0_range[ii])
-   
+
+#%% Testing Finding a Normal Shock in diverging section
+    gamma = 1.4
+    P0 = 8e6 
+    Pb = psiToPa(1.2*300)
+    T0 = 300
+    mdot = 0.3
+    exitArea = diamToarea(1e-3*inTomm(0.5))
+    throatArea = chokedArea_gasDyn(mdot,P0,T0,R_spec,gamma)
+    shockArea = normalShockNewtonRaphson(throatArea,exitArea,gamma,P0,Pb)
+
+#%% Testing Geometry Generator
+    needsTesting = False
+    if needsTesting:
+        interpPoints = 100
+        rThroat = 5
+        rOutlet = 10
+        rInlet = 15
+        convAngle = 30
+        divAngle = 15
+        zInlet = 5
+        zOutlet = 5
+        zThroat = 15
+        vertices = convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,convAngle,divAngle,0)
+        verticesCopy = removeRadialZeros(vertices)
+        rzInterp = np.zeros((interpPoints,2))
+        rzInterp[:,1] = np.linspace(0,verticesCopy[-1,2],interpPoints)
+        rzInterp[:,0] = np.interp(rzInterp[:,1],verticesCopy[:,2],verticesCopy[:,0])
+
+#%% Generating Orifice Dimensions and Performing Analysis on it
+    pts = 100
+    mdot = 0.3 # [kg/s]
+    P0 = 8e6 # [Pa]
+    Pb = psiToPa(1.2*300) # [Pa]
+    T0 = 300 # [Kelvin]
+    gas.TPX = T0,P0,gasMolar
+    gamma = gas.cp/gas.cv
+    coneAngle = 15 # [degrees]
+    rInlet = inTomm(0.5)/2*1e-3 # [m] 
+    rOutlet = rInlet # [m]
+    zInlet = 5*1e-3 # [m]
+    zOutlet = 5*1e-3
+    rThroat = areaToDiam(chokedArea_gasDyn(mdot,P0,T0,R_spec,gamma))/2
+    zThroat = rThroat/2
+    solnVenturi = np.zeros((pts))
+
+    vertices = convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5)
+    interpVertices = interpolatedVertices(vertices,pts)
+    print(axiVerticesString(vertices*1e3))
+
+    for ii in range(pts):
+
+        if ii == 0:
+            MachGuess = 0.5
+            shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet),gamma,P0,Pb)
+            if shockArea != 0:
+                
+                zShock = 0
+        elif interpVertices[ii-1,0] == interpVertices[ii,0]:
+            soln[ii] = soln[ii-1]
+        elif interpVertices[ii-1,0] > interpVertices[ii,0]:
+            MachGuess = 0.5
+        else:
+            MachGuess = 5
+
+        areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
+        solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+
+
+
+
+
+
+
 #%% Plotting
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
@@ -260,4 +456,14 @@ if __name__ == '__main__':
     plt.plot(P0_range,solnShock[:,1], label = "Back Pressure for Normal Shock at Exit")
     plt.legend()
     plt.show()
+
+#%% Plotting Geometry Test
+    plt.figure(5)
+    plt.title("Plotting Geometry")
+    plt.scatter(vertices[:,2],vertices[:,0], label = "Vertices")
+    plt.plot(interpVertices[:,1],interpVertices[:,0], label = "Interpolated Points")
+    plt.plot(interpVertices[:,1],solnVenturi, label = "Mach Number")
+    plt.legend()
+    plt.show()
+
 # %%
