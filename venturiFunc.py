@@ -148,6 +148,12 @@ def mach(u,c):
 def stagnationPressureRatio(gamma,mach):
     return (1+(gamma-1)/2*mach*mach)**(gamma/(gamma-1))
 
+#inputs: mach, gamma
+#outputs: ratio of stagnation temperature to static temperature (T0/T)
+def stagnationTempRatio(gamma,mach):
+    return (1 + (gamma-1)/2*mach*mach)
+
+
 #inputs: stagnationPressureRatio, gamma
 #outputs: rhoStagnation/rhoStatic
 #reference: pg 76 right above eqn 3.17 Gas Dynamics James John
@@ -391,7 +397,7 @@ if __name__ == '__main__':
     zOutlet = 20*1e-3
     rThroat = areaToDiam(chokedArea_gasDyn(mdot,P0,T0,R_spec,gamma))/2
     zThroat = rThroat/2
-    solnVenturi = np.zeros((pts))
+    solnVenturi = np.zeros((pts,3))
 
     vertices = convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5)
     interpVertices = interpolatedVertices(vertices,pts)
@@ -405,15 +411,17 @@ if __name__ == '__main__':
     machBeforeShock = machAreaRatio(5,shockArea/diamToarea(rThroat*2),gamma)
     stagRatio = stagPratioAcrossNormShock(machBeforeShock,gamma)
     Astar2 = diamToarea(rThroat*2)/stagRatio
+    P0_afterShock = P0*stagRatio
 
     for ii in range(pts):
 
         if ii == 0:
             MachGuess = 0.5
             areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-            solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
-            ctr = 0
-            ctr2 = 0 
+            solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+            solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
+            solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
+            
 
         elif interpVertices[ii-1,0] == interpVertices[ii,0]:
             solnVenturi[ii] = solnVenturi[ii-1]
@@ -421,19 +429,27 @@ if __name__ == '__main__':
         elif interpVertices[ii-1,0] > interpVertices[ii,0]:    
             MachGuess = 0.5
             areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-            solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+            solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+            solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
+            solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
 
         else:
 
             if ii < shockIndex:
                 MachGuess = 5
                 areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-                solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+                solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
+                solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
             else:
                 MachGuess = 0.5
                 areaRatio = diamToarea(interpVertices[ii,0]*2)/Astar2
-                solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
+                solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
+                solnVenturi[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,solnVenturi[ii,0])
+                
 
+        
     
 
         # elif interpVertices[ii-1,0] < interpVertices[ii,0]:
@@ -533,7 +549,9 @@ if __name__ == '__main__':
     plt.title("Plotting Geometry")
     plt.scatter(vertices[:,2],vertices[:,0], label = "Vertices")
     plt.plot(interpVertices[:,1],interpVertices[:,0], label = "Interpolated Points")
-    plt.plot(interpVertices[:,1],solnVenturi, label = "Mach Number")
+    plt.plot(interpVertices[:,1],solnVenturi[:,0], label = "Mach Number")
+    plt.plot(interpVertices[:,1],solnVenturi[:,1], label = "Static Temperature ")
+    plt.plot(interpVertices[:,1],solnVenturi[:,2], label = "Static Pressure [Pa]")
     plt.legend()
     plt.show()
 
