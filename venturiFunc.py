@@ -499,14 +499,41 @@ if __name__ == '__main__':
     plt.show()
 
 #%% Plotting Geometry Test
-    plt.figure(5)
-    plt.title("Plotting Geometry")
-    plt.scatter(vertices[:,2],vertices[:,0], label = "Vertices")
-    plt.plot(interpVertices[:,1],interpVertices[:,0], label = "Interpolated Points")
-    plt.plot(interpVertices[:,1],solnVenturi[:,0], label = "Mach Number")
-    plt.plot(interpVertices[:,1],solnVenturi[:,1], label = "Static Temperature ")
-    plt.plot(interpVertices[:,1],solnVenturi[:,2], label = "Static Pressure [Pa]")
-    plt.legend()
+    xlabel = "axial length [mm]"
+    xlabel2 ="axial length [in]"
+    fig, ax0 = plt.subplots(4,constrained_layout =True)
+    ax0[0].set_title("Plotting Geometry")
+    ax0[0].scatter(vertices[:,2]*1e3,vertices[:,0]*1e3, label = "Geometry Vertices")
+    ax0[0].plot(interpVertices[:,1]*1e3,interpVertices[:,0]*1e3, label = "Interpolated Points")
+    ax0[0].set_ylabel("radial distance [mm]")
+    secaxx0 = ax0[0].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx0.set_xlabel(xlabel2)
+    secaxy0 = ax0[0].secondary_yaxis('right',functions = (mmToIn,inTomm))
+    secaxy0.set_ylabel("radial distance [in]")
+    ax0[0].legend()
+
+    ax0[1].set_title("Mach Number along Venturi")
+    ax0[1].plot(interpVertices[:,1]*1e3,solnVenturi[:,0], label = "Mach Number")
+    ax0[1].set_ylabel("Mach Number")
+    ax0[1].set_xlabel(xlabel)
+    secaxx1 = ax0[1].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx1.set_xlabel(xlabel2)
+
+    ax0[2].set_title("Static Temperature along Venturi")
+    ax0[2].plot(interpVertices[:,1]*1e3,solnVenturi[:,1], label = "Static Temperature ")
+    ax0[2].set_xlabel(xlabel)
+    ax0[2].set_ylabel("Static Temperature [K]")
+    secaxx2 = ax0[2].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx2.set_xlabel(xlabel2)
+
+    ax0[3].set_title("Static Pressure along Venturi")
+    ax0[3].plot(interpVertices[:,1]*1e3,solnVenturi[:,2], label = "Static Pressure [Pa]")
+    ax0[3].set_xlabel(xlabel)
+    ax0[3].set_ylabel("Static Pressure [Pa]")    
+    secaxx3 = ax0[3].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx3.set_xlabel(xlabel2)
+    secaxy3 = ax0[3].secondary_yaxis('right',functions = (paToPsi,psiToPa))
+    secaxy3.set_ylabel("Static Pressure [psi]")
     plt.show()
 
 # %%
