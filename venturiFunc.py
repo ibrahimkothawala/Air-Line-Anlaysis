@@ -448,52 +448,6 @@ if __name__ == '__main__':
                 solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
                 solnVenturi[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,solnVenturi[ii,0])
                 
-
-        
-    
-
-        # elif interpVertices[ii-1,0] < interpVertices[ii,0]:
-        #     if ctr == 0:
-        #         shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
-        #         ctr+=1
-          
-        #     if shockArea != 0:
-        #         rShock = areaToDiam(shockArea)/2
-        #         if ctr2 == 0:
-        #             jj = ii
-        #             closestIdxToNormShock = find_nearest(interpVertices[jj:-1,0],rShock)
-        #             closestIdxToNormShock += jj
-                
-        #         if ii < closestIdxToNormShock:
-        #             MachGuess = 5
-        #             areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-        #             solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
-                
-        #         elif ii == closestIdxToNormShock:
-        #             MachGuess = 5
-        #             areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-        #             solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
-        #             stagRatio = stagPratioAcrossNormShock(solnVenturi[ii],gamma)
-        #             Astar2 = diamToarea(rThroat*2)/stagRatio
-                
-        #         elif ii > closestIdxToNormShock:
-        #             MachGuess = 0.5
-        #             areaRatio = diamToarea(interpVertices[ii,0]*2)/Astar2
-        #             solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
-            
-        #     else:
-        #         MachGuess = 5
-        #         areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-        #         solnVenturi[ii] = machAreaRatio(MachGuess,areaRatio,gamma)
-
-      
-
-
-
-
-
-
-
 #%% Plotting
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
