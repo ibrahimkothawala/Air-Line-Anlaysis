@@ -193,7 +193,6 @@ def stagPratioAcrossNormShock(mach1, gamma):
 #outputs: ratio of upstream stagnation pressure to exit pressure for a shock that occurs at that area (Pb/P01)
 #references: pg 137 Gas Dynamics James John
 #note this is used in other functions not useful by itself
-# currently does not work
 def BackPressureAfterNormalShock(throatArea,exitArea,shockArea, gamma, P0):
     mach1 = machAreaRatio(5,shockArea/throatArea,gamma) #calculates the mach number right before shock
     P0ratioShock = stagPratioAcrossNormShock(mach1,gamma) #note this is equivalent to p_02/p_01 = A*_1/A*_2 eqn 4.21 Gas Dynamamics 
