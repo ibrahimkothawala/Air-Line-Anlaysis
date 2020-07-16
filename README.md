@@ -1,5 +1,5 @@
 # Air Line Analysis
-This calculator is used to determine the pressure drop of the gaseous oxidizer in our propellent delivery system and to size the orifice which acts as the oxidizer injector. 
+This calculator is used to determine the pressure drop of the gaseous oxidizer in our propellent delivery system and to size a venturi or an orifice which acts as the oxidizer injector. 
 
 # Required Libraries
 -Numpy
@@ -25,5 +25,10 @@ The pipe segment is broken into 1 mm long pipe segments. This is done because as
 ### Pressure drop in a valve or fitting
 Since fL/D is equivalent to the a valve or fittings coefficient K, that is substituted into where fL/D actual goes. Then the algorithm continues as it would in the pressure drop across a pipe segment. 
 
+## How Does Air Line Analysis size a Venturi?
+All the functions used in the venturi sizing are in venturiFunc, and are based on chapters 3 and 4 in Gas Dynamics. The main consideration is the throat area. The throat area is calculated assuming choked flow through the venturi and using the upstream conditions to achieve a specified mass flow rate. There are other functions to determine the normal shock locations and plot temperature, pressure, and mach against axial length for a specified venturi geometry and upstream and downstream conditions. 
+
 ## How does Air Line Analysis size an Orifice? 
+The orifice sizing functions are currently outdated and are based on the assumption that the orifice will be a thin walled orifice. Which may be useful in other designs but thin walled orifices do not sufficiently choke the flow. 
+
 First a theoretical orifice area is determined by setting the ratio of the upstream pressure to the downstream pressure to be 1.528 using eqn 15.44 in Gas Dynamics by James E. John. Pressure ratios higher than this will create choked flow (find ref). The pressure upstream of the orifice is determined using the fanno flow analysis and is the exit pressure of the piping system. Once the area is determined, the pressure downstream of the theoretical orifice is solved for using eqn 15.44 in Gas Dynamics. Since the theoretical area may not be available to purchase, the closest size smaller than the theoretical area that can be purchased should be inputted manually. It is already done for our case. The maximum mass flow rate that can be achieved by using the purchased orifice is then calculated using eqn 15.47 in Gas Dynamics and the pressure downstream of the orifice is calculated using eqn 15.44 using that maximum mass flow rate. Then using the downstream pressure calculated in the previous step a mass flow rate is determined using eqn 15.44. 
