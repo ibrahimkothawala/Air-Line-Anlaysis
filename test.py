@@ -6,7 +6,7 @@ import frictionFactor as ff
 import cantera as ct
 import matplotlib.pyplot as plt
 import DifferentialFannoPressureDrop as DFP
-import Orifice_size as ORS
+import massFlowController as ORS
 import LineLossAnalysis as LL
 
 p1 = LL.psi_to_MPa(300)*1e6

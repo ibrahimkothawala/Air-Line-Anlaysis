@@ -193,7 +193,6 @@ def stagPratioAcrossNormShock(mach1, gamma):
 #outputs: ratio of upstream stagnation pressure to exit pressure for a shock that occurs at that area (Pb/P01)
 #references: pg 137 Gas Dynamics James John
 #note this is used in other functions not useful by itself
-# currently does not work
 def BackPressureAfterNormalShock(throatArea,exitArea,shockArea, gamma, P0):
     mach1 = machAreaRatio(5,shockArea/throatArea,gamma) #calculates the mach number right before shock
     P0ratioShock = stagPratioAcrossNormShock(mach1,gamma) #note this is equivalent to p_02/p_01 = A*_1/A*_2 eqn 4.21 Gas Dynamamics 
@@ -202,33 +201,6 @@ def BackPressureAfterNormalShock(throatArea,exitArea,shockArea, gamma, P0):
     PbP02Ratio = 1/stagnationPressureRatio(gamma,machExit) #p_staticExit/p02
     return PbP02Ratio*P0ratioShock*P0
 
-#inputs: area of throat, exit area, gamma, upstream stagnation pressure, exit static pressure
-#outputs: if normal shock occurs: location of normal shock
-# if normal shock doesn't occur: returns 0 and prints message normal shock doesn't occur within diverging section
-# if flow is not choked: message returns 0 and prints flow is not choked
-# currently does not work 
-def normalShockLoop(throatArea,exitArea,gamma, P0, Pb):
-    # chokedCondition = 1/PchokeCondition(gamma)
-    # if P0/Pb < chokedCondition: 
-    #     print("flow is not choked")
-    #     return 0
-    # else:
-    #     PbShockatExit = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
-    #     print(PbShockatExit)
-    #     if PbShockatExit > Pb:
-    #         print("normal shock does not occur in diverging section")
-    #         return 0
-    #     else:
-    #         shockArea = np.average([throatArea,exitArea])
-    #         PbCalc = BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0)
-    #         ctr = 0; ctrMax = 100; tol = 10
-    #         while ctr < ctrMax and np.abs(PbCalc - Pb) > tol:
-    #             shockArea = (Pb)/(Pb -1)*shockArea
-    #             PbCalc = BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0)
-    #             ctr+=1
-    #         if ctr == ctrMax:
-    #             print("convergence failed")
-            return 0 #shockArea
 
 #inputs: area of throat, exit area, gamma, upstream stagnation pressure, exit static pressure
 #outputs: if normal shock occurs: location of normal shock
