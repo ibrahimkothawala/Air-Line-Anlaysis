@@ -183,15 +183,22 @@ for ii in range(npts):
 if venturi:
     estimatedBackPressure = 1.2*2e6
     solnVenturi = np.ma.masked_equal(solnVenturi,0)
-    plt.figure(1)
-    plt.title("Static Upstream Pressure Against Downstream Stagnation Pressure")
-    plt.ylabel("Downstream Pressure")
-    plt.xlabel("Upstream Static Pressure")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,1],label = "Stagnation Pressure at Pipe System Outlet")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,3],label = "Downstream back pressure for normal shock at venturi exit")
-    plt.plot(solnVenturi[:,0],solnVenturi[:,4],label = "Downstream back pressure for normal shock at venturi throat")
-    plt.plot(solnVenturi[:,0],estimatedBackPressure*np.ones(len(solnVenturi[:,0])),'-.',label = "Estimated back pressure")
-    plt.legend()
+ 
+
+    fig, ax0 = plt.subplots(constrained_layout= True)
+
+    ax0.set_title("Static Upstream Pressure Against Downstream Stagnation Pressure")
+    ax0.set_ylabel("Downstream Pressure [Pa]")
+    ax0.set_xlabel("Upstream Static Pressure [Pa]")
+    ax0.plot(solnVenturi[:,0],solnVenturi[:,1],label = "Stagnation Pressure at Pipe System Outlet")
+    ax0.plot(solnVenturi[:,0],solnVenturi[:,3],label = "Downstream back pressure for normal shock at venturi exit")
+    ax0.plot(solnVenturi[:,0],solnVenturi[:,4],label = "Downstream back pressure for normal shock at venturi throat")
+    ax0.plot(solnVenturi[:,0],estimatedBackPressure*np.ones(len(solnVenturi[:,0])),'-.',label = "Estimated back pressure")
+    axx = ax0.secondary_xaxis('top',functions = (VF.paToPsi, VF.psiToPa))
+    axx.set_xlabel("Upstream Static Pressure [psi]")
+    axy = ax0.secondary_yaxis('right',functions = (VF.paToPsi,VF.psiToPa))
+    axy.set_ylabel("Downstream Pressure [psi]")    
+    ax0.legend()
     
 #%% Plotting Orifice
 

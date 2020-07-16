@@ -403,8 +403,6 @@ if __name__ == '__main__':
     interpVertices = interpolatedVertices(vertices,pts)
     verticesNoZeros = removeRadialZeros(vertices)
     print(axiVerticesString(vertices*1e3))
-    # data = np.zeros((pts,4))
-    # data[:,[0,1]] = interpVertices
     shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
     rShock = areaToDiam(shockArea)/2
     shockIndex = axialShockLocation(interpVertices,shockArea)
@@ -412,6 +410,9 @@ if __name__ == '__main__':
     stagRatio = stagPratioAcrossNormShock(machBeforeShock,gamma)
     Astar2 = diamToarea(rThroat*2)/stagRatio
     P0_afterShock = P0*stagRatio
+    
+    mdot = 0.3 # [kg/s]
+   
 
     for ii in range(pts):
 
@@ -448,7 +449,7 @@ if __name__ == '__main__':
                 solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
                 solnVenturi[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,solnVenturi[ii,0])
                 
-#%% Plotting
+#%% Plotting Choked Area tests
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
     ax1[0].plot(pStaticUps_range,soln[:,0],label ="Throat Pressure: "+"{:.3f}".format(Pthroat/1e6)+" [MPa]"+" Throat diameter: "+"{:.3f}".format(1e3*areaToDiam(A_ups/2))+" [mm]")
@@ -461,13 +462,13 @@ if __name__ == '__main__':
     ax1[1].set_title("Choked diameter against upstream stagnation pressure for "+"{:.2f}".format(mdot)+" [kg/s] mass flowrate")
     ax1[1].set_ylabel("throat diameter [mm]")
     ax1[1].set_xlabel("upstream stagnation pressure [Pa]")
-    ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "(wiki func)")
+    #ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,1])*1e3,label = "(wiki func)")
     ax1[1].plot(pStaticUps_range,areaToDiam(soln[:,4])*1e3,label = "(gas dyn func)")
     secaxy = ax1[1].secondary_yaxis('right',functions = (mmToIn,inTomm))
     secaxy.set_ylabel("throat diameter [in]")
     secaxx1 = ax1[1].secondary_xaxis('top',functions = (paToPsi,psiToPa))
     secaxx1.set_xlabel("upstream stagnation pressure [psi]")
-    ax1[1].legend()
+    #ax1[1].legend()
     
     ax1[2].set_title("Mass flow rate against upstream pressure")
     ax1[2].set_ylabel("Mass flow rate [kg/s]")
