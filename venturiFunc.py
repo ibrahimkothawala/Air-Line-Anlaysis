@@ -5,6 +5,8 @@ from scipy.optimize import fsolve
 #%% Functions and Global Constants
 #Gas Constant
 R = 8.31446261815324 #j/K/mol
+subSonicMsg = "Flow is Subsonic"
+noShockMsg = "No shock occurs"
 
 #converts (x,y,z) points to a string that can be pasted into blockMeshDict
 def axiVerticesString(vertices):
@@ -206,16 +208,18 @@ def BackPressureAfterNormalShock(throatArea,exitArea,shockArea, gamma, P0):
 #outputs: if normal shock occurs: location of normal shock
 # if normal shock doesn't occur: returns 0 and prints message normal shock doesn't occur within diverging section
 # if flow is not choked: message returns 0 and prints flow is not choked
-def normalShockNewtonRaphson(throatArea,exitArea,gamma,P0,Pb):
+def normalShockNewtonRaphson(throatArea,exitArea,gamma,P0,Pb,printStatus = True):
     chokedCondition = 1/PchokeCondition(gamma)
-    if P0/Pb < chokedCondition: 
-        print("flow is not choked")
-        return 0
+    if P0/Pb < chokedCondition:
+        if printStatus:
+            print(subSonicMsg)
+        return subSonicMsg
     else:
         PbShockatExit = BackPressureAfterNormalShock(throatArea,exitArea,exitArea,gamma,P0) # calculates the back pressure ratio to upstream stagnation pressure ratio for a shock that occurs at the exit
         if PbShockatExit > Pb:
-            print("normal shock does not occur in diverging section")
-            return 0
+            if printStatus:
+                print(noShockMsg)
+            return noShockMsg
         else:
             def f(shockArea):
                 return BackPressureAfterNormalShock(throatArea,exitArea,shockArea,gamma,P0) - Pb
@@ -385,42 +389,48 @@ if __name__ == '__main__':
     
     mdot = 0.3 # [kg/s]
    
+    def venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,convConeAngle,divConeAngle,zInlet,zThroat,zOutlet,pts=100):
+        result = np.zeros(pts,3)
+        rzPoints = interpolatedVertices(convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5),pts)
+        shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
+        
 
-    for ii in range(pts):
 
-        if ii == 0:
-            MachGuess = 0.5
-            areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-            solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-            solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
-            solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
-            
+        for ii in range(pts):
 
-        elif interpVertices[ii-1,0] == interpVertices[ii,0]:
-            solnVenturi[ii] = solnVenturi[ii-1]
-
-        elif interpVertices[ii-1,0] > interpVertices[ii,0]:    
-            MachGuess = 0.5
-            areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-            solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-            solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
-            solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
-
-        else:
-
-            if ii < shockIndex:
-                MachGuess = 5
-                areaRatio = diamToarea(interpVertices[ii,0]*2)/diamToarea(rThroat*2)
-                solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
-                solnVenturi[ii,2] = P0/stagnationPressureRatio(gamma,solnVenturi[ii,0])
-            else:
+            if ii == 0:
                 MachGuess = 0.5
-                areaRatio = diamToarea(interpVertices[ii,0]*2)/Astar2
-                solnVenturi[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                solnVenturi[ii,1] = T0/stagnationTempRatio(gamma,solnVenturi[ii,0])
-                solnVenturi[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,solnVenturi[ii,0])
+                areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
+                result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
+                result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
                 
+
+            elif rzPoints[ii-1,0] == rzPoints[ii,0]:
+                result[ii] = result[ii-1]
+
+            elif rzPoints[ii-1,0] > rzPoints[ii,0]:    
+                MachGuess = 0.5
+                areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
+                result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
+                result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
+
+            else:
+
+                if ii < shockIndex:
+                    MachGuess = 5
+                    areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
+                    result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                    result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
+                    result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
+                else:
+                    MachGuess = 0.5
+                    areaRatio = diamToarea(rzPoints[ii,0]*2)/Astar2
+                    result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
+                    result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
+                    result[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,result[ii,0])
+                    
 #%% Plotting Choked Area tests
     fig, ax1 = plt.subplots(3,constrained_layout =True)
     ax1[0].set_title("Mass flow rate against upstream pressure")
