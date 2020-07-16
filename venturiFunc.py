@@ -246,7 +246,65 @@ def interpolatedVertices(vertices,pts):
     rzInterp[:,0] = np.interp(rzInterp[:,1],arr[:,2],arr[:,0])
     return rzInterp
 
+#inputs: stagnation temperature, stagnation pressure, gamma, throat diameter,inlet diameter, outlet diameter, converging cone angle, diverging cone angle, 
+# inlet length, throat length, outlet length, points with default being 100
+#outputs: the radial and axial points, mach static temperature  and pressure plots
+#future output for entirely subsonic conditions
+def venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,convConeAngle,divConeAngle,zInlet,zThroat,zOutlet,pts=100):
+    result = np.zeros(pts,3)
+    rzPoints = interpolatedVertices(convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5),pts)
+    shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
+    
+    #checking boundary conditions and making sure current model is valid with given conditions
+    if isinstance(shockArea,str):
+        #if there is no shock in the divering section
+        if shockArea == noShockMsg:
+            shockIndex = pts+1 #checks if there was a shock in diverging section if no shock then make it never reach past shockIndex 
 
+        if shockIndex == subSonicMsg:
+            print("currently does not work with subsonic inlet and outlet")
+            return result
+    else:
+
+        shockIndex = axialShockLocation(interpVertices,shockArea)
+        machBeforeShock = machAreaRatio(5,shockArea/diamToarea(rThroat*2),gamma)
+        stagRatio = stagPratioAcrossNormShock(machBeforeShock,gamma)
+        Astar2 = diamToarea(rThroat*2)/stagRatio
+        P0_afterShock = P0*stagRatio
+
+    #main calculation for loop
+    for ii in range(pts):
+
+        if ii == 0: #initial conditions
+            MachGuess = 0.5
+            aStar1 =  diamToarea(rThroat*2)
+            areaRatio = diamToarea(rzPoints[ii,0]*2)/aStar1
+            P0_loop = P0
+
+        elif rzPoints[ii-1,0] == rzPoints[ii,0]: #copy previous results in straight sections
+            result[ii] = result[ii-1]
+            continue
+
+        elif rzPoints[ii-1,0] > rzPoints[ii,0]: #if loop is in converging section
+            MachGuess = 0.5
+            areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
+
+        else: #if it is not in converging section
+
+            if ii < shockIndex: #if loop is stil behind shock
+                MachGuess = 5
+                areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
+
+            else: #if loop is past shock
+                MachGuess = 0.5
+                areaRatio = diamToarea(rzPoints[ii,0]*2)/Astar2 
+                P0_loop = P0_afterShock
+
+        #putting  mach, static temperature, static pressure into results
+        result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma) #mach
+        result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0]) #static temperature
+        result[ii,2] = P0_loop/stagnationPressureRatio(gamma,result[ii,0]) # static pressure 
+    return rzPoints, result
 
 
 
@@ -381,55 +439,12 @@ if __name__ == '__main__':
     print(axiVerticesString(vertices*1e3))
     shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
     rShock = areaToDiam(shockArea)/2
-    shockIndex = axialShockLocation(interpVertices,shockArea)
-    machBeforeShock = machAreaRatio(5,shockArea/diamToarea(rThroat*2),gamma)
-    stagRatio = stagPratioAcrossNormShock(machBeforeShock,gamma)
-    Astar2 = diamToarea(rThroat*2)/stagRatio
-    P0_afterShock = P0*stagRatio
+    
+ 
     
     mdot = 0.3 # [kg/s]
    
-    def venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,convConeAngle,divConeAngle,zInlet,zThroat,zOutlet,pts=100):
-        result = np.zeros(pts,3)
-        rzPoints = interpolatedVertices(convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5),pts)
-        shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
-        
 
-
-        for ii in range(pts):
-
-            if ii == 0:
-                MachGuess = 0.5
-                areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
-                result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
-                result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
-                
-
-            elif rzPoints[ii-1,0] == rzPoints[ii,0]:
-                result[ii] = result[ii-1]
-
-            elif rzPoints[ii-1,0] > rzPoints[ii,0]:    
-                MachGuess = 0.5
-                areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
-                result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
-                result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
-
-            else:
-
-                if ii < shockIndex:
-                    MachGuess = 5
-                    areaRatio = diamToarea(rzPoints[ii,0]*2)/diamToarea(rThroat*2)
-                    result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                    result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
-                    result[ii,2] = P0/stagnationPressureRatio(gamma,result[ii,0])
-                else:
-                    MachGuess = 0.5
-                    areaRatio = diamToarea(rzPoints[ii,0]*2)/Astar2
-                    result[ii,0] = machAreaRatio(MachGuess,areaRatio,gamma)
-                    result[ii,1] = T0/stagnationTempRatio(gamma,result[ii,0])
-                    result[ii,2] = P0_afterShock/stagnationPressureRatio(gamma,result[ii,0])
                     
 #%% Plotting Choked Area tests
     fig, ax1 = plt.subplots(3,constrained_layout =True)
@@ -495,28 +510,30 @@ if __name__ == '__main__':
     secaxy0.set_ylabel("radial distance [in]")
     ax0[0].legend()
 
-    ax0[1].set_title("Mach Number along Venturi")
-    ax0[1].plot(interpVertices[:,1]*1e3,solnVenturi[:,0], label = "Mach Number")
-    ax0[1].set_ylabel("Mach Number")
-    ax0[1].set_xlabel(xlabel)
-    secaxx1 = ax0[1].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    secaxx1.set_xlabel(xlabel2)
 
-    ax0[2].set_title("Static Temperature along Venturi")
-    ax0[2].plot(interpVertices[:,1]*1e3,solnVenturi[:,1], label = "Static Temperature ")
-    ax0[2].set_xlabel(xlabel)
-    ax0[2].set_ylabel("Static Temperature [K]")
-    secaxx2 = ax0[2].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    secaxx2.set_xlabel(xlabel2)
+#needs venturi analysis needs to be finished first 
+    # ax0[1].set_title("Mach Number along Venturi")
+    # ax0[1].plot(interpVertices[:,1]*1e3,solnVenturi[:,0], label = "Mach Number")
+    # ax0[1].set_ylabel("Mach Number")
+    # ax0[1].set_xlabel(xlabel)
+    # secaxx1 = ax0[1].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    # secaxx1.set_xlabel(xlabel2)
 
-    ax0[3].set_title("Static Pressure along Venturi")
-    ax0[3].plot(interpVertices[:,1]*1e3,solnVenturi[:,2], label = "Static Pressure [Pa]")
-    ax0[3].set_xlabel(xlabel)
-    ax0[3].set_ylabel("Static Pressure [Pa]")    
-    secaxx3 = ax0[3].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    secaxx3.set_xlabel(xlabel2)
-    secaxy3 = ax0[3].secondary_yaxis('right',functions = (paToPsi,psiToPa))
-    secaxy3.set_ylabel("Static Pressure [psi]")
-    plt.show()
+    # ax0[2].set_title("Static Temperature along Venturi")
+    # ax0[2].plot(interpVertices[:,1]*1e3,solnVenturi[:,1], label = "Static Temperature ")
+    # ax0[2].set_xlabel(xlabel)
+    # ax0[2].set_ylabel("Static Temperature [K]")
+    # secaxx2 = ax0[2].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    # secaxx2.set_xlabel(xlabel2)
+
+    # ax0[3].set_title("Static Pressure along Venturi")
+    # ax0[3].plot(interpVertices[:,1]*1e3,solnVenturi[:,2], label = "Static Pressure [Pa]")
+    # ax0[3].set_xlabel(xlabel)
+    # ax0[3].set_ylabel("Static Pressure [Pa]")    
+    # secaxx3 = ax0[3].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    # secaxx3.set_xlabel(xlabel2)
+    # secaxy3 = ax0[3].secondary_yaxis('right',functions = (paToPsi,psiToPa))
+    # secaxy3.set_ylabel("Static Pressure [psi]")
+    # plt.show()
 
 # %%
