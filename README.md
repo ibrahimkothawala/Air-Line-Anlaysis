@@ -2,10 +2,10 @@
 This calculator is used to determine the pressure drop of the gaseous oxidizer in our propellent delivery system and to size a venturi or an orifice which acts as the oxidizer injector. 
 
 # Required Libraries
--Numpy
--Cantera
--Matplotlib
--Scipy
+- Numpy
+- Cantera
+- Matplotlib
+- Scipy
 
 ## How does Air Line Analysis calculate pressure drop?
 It utilizes the fanno flow model for compressible gasses in pipes. A compressible model was utilized instead of an incompressible model in order to capture the density changes that would occur as the pressure within the system dropped due to friction. In addition Fanno Flow assumes the flow to be adiabatic. This model assumption is the most likely to fail. To learn more about fanno flow and the governing equations read chapter 6 of The Dynamics and Thermodynamics of COMPRESSIBLE FLUID FLOW by Ascher Shapiro. The pressure drop is calculated using DifferentialFannoPressureDrop.py. LineLossAnalysis utilizes DifferentialFannoPressureDrop.py to calculate the pressure drop across the entire pipe system. The pressure drop across the orifice utilizes a different model which will be discussed in a further section. 
