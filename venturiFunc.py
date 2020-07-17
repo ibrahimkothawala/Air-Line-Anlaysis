@@ -251,7 +251,7 @@ def interpolatedVertices(vertices,pts):
 #outputs: the radial and axial points, mach static temperature  and pressure plots
 #future output for entirely subsonic conditions
 def venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,convConeAngle,divConeAngle,zInlet,zThroat,zOutlet,pts=100):
-    result = np.zeros(pts,3)
+    result = np.zeros((pts,3))
     rzPoints = interpolatedVertices(convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5),pts)
     shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
     
@@ -266,7 +266,7 @@ def venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,convConeAngle,divConeA
             return result
     else:
 
-        shockIndex = axialShockLocation(interpVertices,shockArea)
+        shockIndex = axialShockLocation(rzPoints,shockArea)
         machBeforeShock = machAreaRatio(5,shockArea/diamToarea(rThroat*2),gamma)
         stagRatio = stagPratioAcrossNormShock(machBeforeShock,gamma)
         Astar2 = diamToarea(rThroat*2)/stagRatio
@@ -416,7 +416,8 @@ if __name__ == '__main__':
         rzInterp[:,1] = np.linspace(0,verticesCopy[-1,2],interpPoints)
         rzInterp[:,0] = np.interp(rzInterp[:,1],verticesCopy[:,2],verticesCopy[:,0])
 
-#%% Generating Orifice Dimensions and Performing Analysis on it
+#%% Generating Venturi Dimensions and Performing Analysis on it
+    
     pts = 100
     mdot = 0.3 # [kg/s]
     P0 = 8e6 # [Pa]
@@ -425,26 +426,20 @@ if __name__ == '__main__':
     gas.TPX = T0,P0,gasMolar
     gamma = gas.cp/gas.cv
     coneAngle = 15 # [degrees]
+    mdot = 0.3 # [kg/s]
+
+
+    rThroat = areaToDiam(chokedArea_gasDyn(mdot,P0,T0,R_spec,gamma))/2
     rInlet = inTomm(0.5)/2*1e-3 # [m] 
     rOutlet = rInlet # [m]
+    
     zInlet = 5*1e-3 # [m]
     zOutlet = 20*1e-3
-    rThroat = areaToDiam(chokedArea_gasDyn(mdot,P0,T0,R_spec,gamma))/2
     zThroat = rThroat/2
-    solnVenturi = np.zeros((pts,3))
-
-    vertices = convDiv(rInlet,rThroat,rOutlet,zInlet,zThroat,zOutlet,coneAngle,coneAngle,5)
-    interpVertices = interpolatedVertices(vertices,pts)
-    verticesNoZeros = removeRadialZeros(vertices)
-    print(axiVerticesString(vertices*1e3))
-    shockArea = normalShockNewtonRaphson(diamToarea(rThroat*2),diamToarea(rOutlet*2),gamma,P0,Pb)
-    rShock = areaToDiam(shockArea)/2
     
+    solnVenturi = venturiAnalysis(T0,P0,Pb,gamma,rThroat,rInlet,rOutlet,coneAngle,coneAngle,zInlet,zThroat,zOutlet,pts)
+
  
-    
-    mdot = 0.3 # [kg/s]
-   
-
                     
 #%% Plotting Choked Area tests
     fig, ax1 = plt.subplots(3,constrained_layout =True)
@@ -497,12 +492,16 @@ if __name__ == '__main__':
     plt.show()
 
 #%% Plotting Geometry Test
+
+
+    #checking if venturi analysis works as it should before checking plotting
     xlabel = "axial length [mm]"
     xlabel2 ="axial length [in]"
+
     fig, ax0 = plt.subplots(4,constrained_layout =True)
     ax0[0].set_title("Plotting Geometry")
-    ax0[0].scatter(vertices[:,2]*1e3,vertices[:,0]*1e3, label = "Geometry Vertices")
-    ax0[0].plot(interpVertices[:,1]*1e3,interpVertices[:,0]*1e3, label = "Interpolated Points")
+#   ax0[0].scatter(vertices[:,2]*1e3,vertices[:,0]*1e3, label = "Geometry Vertices")
+    ax0[0].plot(solnVenturi[0][:,1]*1e3,solnVenturi[0][:,0]*1e3*1e3, label = "Interpolated Points")
     ax0[0].set_ylabel("radial distance [mm]")
     secaxx0 = ax0[0].secondary_xaxis('top',functions = (mmToIn,inTomm))
     secaxx0.set_xlabel(xlabel2)
@@ -512,28 +511,28 @@ if __name__ == '__main__':
 
 
 #needs venturi analysis needs to be finished first 
-    # ax0[1].set_title("Mach Number along Venturi")
-    # ax0[1].plot(interpVertices[:,1]*1e3,solnVenturi[:,0], label = "Mach Number")
-    # ax0[1].set_ylabel("Mach Number")
-    # ax0[1].set_xlabel(xlabel)
-    # secaxx1 = ax0[1].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    # secaxx1.set_xlabel(xlabel2)
+    ax0[1].set_title("Mach Number along Venturi")
+    ax0[1].plot(solnVenturi[0][:,1]*1e3,solnVenturi[1][:,0], label = "Mach Number")
+    ax0[1].set_ylabel("Mach Number")
+    ax0[1].set_xlabel(xlabel)
+    secaxx1 = ax0[1].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx1.set_xlabel(xlabel2)
 
-    # ax0[2].set_title("Static Temperature along Venturi")
-    # ax0[2].plot(interpVertices[:,1]*1e3,solnVenturi[:,1], label = "Static Temperature ")
-    # ax0[2].set_xlabel(xlabel)
-    # ax0[2].set_ylabel("Static Temperature [K]")
-    # secaxx2 = ax0[2].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    # secaxx2.set_xlabel(xlabel2)
+    ax0[2].set_title("Static Temperature along Venturi")
+    ax0[2].plot(solnVenturi[0][:,1]*1e3,solnVenturi[1][:,1], label = "Static Temperature ")
+    ax0[2].set_xlabel(xlabel)
+    ax0[2].set_ylabel("Static Temperature [K]")
+    secaxx2 = ax0[2].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx2.set_xlabel(xlabel2)
 
-    # ax0[3].set_title("Static Pressure along Venturi")
-    # ax0[3].plot(interpVertices[:,1]*1e3,solnVenturi[:,2], label = "Static Pressure [Pa]")
-    # ax0[3].set_xlabel(xlabel)
-    # ax0[3].set_ylabel("Static Pressure [Pa]")    
-    # secaxx3 = ax0[3].secondary_xaxis('top',functions = (mmToIn,inTomm))
-    # secaxx3.set_xlabel(xlabel2)
-    # secaxy3 = ax0[3].secondary_yaxis('right',functions = (paToPsi,psiToPa))
-    # secaxy3.set_ylabel("Static Pressure [psi]")
-    # plt.show()
+    ax0[3].set_title("Static Pressure along Venturi")
+    ax0[3].plot(solnVenturi[0][:,1]*1e3,solnVenturi[1][:,2], label = "Static Pressure [Pa]")
+    ax0[3].set_xlabel(xlabel)
+    ax0[3].set_ylabel("Static Pressure [Pa]")    
+    secaxx3 = ax0[3].secondary_xaxis('top',functions = (mmToIn,inTomm))
+    secaxx3.set_xlabel(xlabel2)
+    secaxy3 = ax0[3].secondary_yaxis('right',functions = (paToPsi,psiToPa))
+    secaxy3.set_ylabel("Static Pressure [psi]")
+    plt.show()
 
 # %%
